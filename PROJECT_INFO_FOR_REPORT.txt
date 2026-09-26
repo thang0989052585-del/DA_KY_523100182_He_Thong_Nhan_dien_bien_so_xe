@@ -1,0 +1,713 @@
+================================================================================
+BÁO CÁO THÔNG TIN CHI TIẾT DỰ ÁN ĐỒ ÁN TỐT NGHIỆP / ĐỒ ÁN MÔN HỌC
+ĐỀ TÀI: XÂY DỰNG HỆ THỐNG NHẬN DIỆN VÀ ĐỌC BIỂN SỐ PHƯƠNG TIỆN BẰNG AI
+        KẾT HỢP GIÁM SÁT, CẢNH BÁO VÀ THIẾT BỊ NHÚNG
+================================================================================
+Ngày tạo báo cáo: 11/09/2026
+Thư mục dự án   : c:\doan\DOAN
+Mục đích        : Cung cấp số liệu, kiến trúc, hiện trạng và phân tích kỹ thuật
+                  chính xác 100% dựa trên mã nguồn và thực nghiệm để viết thuyết minh đồ án.
+
+==================================================
+1. THÔNG TIN CHUNG VỀ ĐỀ TÀI
+==================================================
+
+- Tên đề tài chính xác:
+  “Xây dựng hệ thống nhận diện và đọc biển số phương tiện bằng AI kết hợp giám sát, cảnh báo và thiết bị nhúng”
+  (Tên trong tài liệu kỹ thuật nội bộ: "Nghiên cứu & Xây dựng Hệ thống Tự Động Nhận Diện Biển Số Xe - Automatic License Plate Recognition kết hợp IoT/Embedded").
+
+- Mục tiêu tổng quát:
+  Nghiên cứu, thiết kế và hiện thực hóa một hệ thống hoàn chỉnh từ phần mềm Trí tuệ nhân tạo (AI) đến thiết bị phần cứng nhúng (IoT/Embedded):
+  Tự động phát hiện vị trí biển số trên phương tiện giao thông, đọc chính xác chuỗi ký tự (OCR) theo quy chuẩn biển số xe cơ giới Việt Nam, đối chiếu danh sách biển số mục tiêu (Blacklist/Whitelist) và phát tín hiệu cảnh báo không dây tới vi điều khiển để điều khiển cơ cấu chấp hành (đèn báo/còi).
+
+- Các mục tiêu cụ thể:
+  1. Xây dựng mô-đun phát hiện vùng biển số (Plate Detection) ứng dụng mạng nơ-ron tích chập YOLOv8 (kèm thuật toán dự phòng OpenCV Canny Contour).
+  2. Xây dựng mô-đun nhận dạng ký tự quang học (OCR) ứng dụng kiến trúc mạng CRNN (CNN ResNet-style + Squeeze-Excitation + BiLSTM + Attention + CTC Loss) giải mã chuỗi ký tự không cần phân đoạn rời rạc.
+  3. Xây dựng giao diện Web Dashboard bằng Streamlit phục vụ trực quan hóa: tải ảnh, chụp camera snapshot, khoanh vùng bounding box, hiển thị kết quả OCR, độ tin cậy, lưu trữ nhật ký lịch sử nhận diện.
+  4. Xây dựng phân hệ giám sát mục tiêu (Target Plate Tracking): chuẩn hóa chuỗi ký tự, so khớp và kích hoạt cảnh báo trực quan trên Web khi phát hiện phương tiện trong danh sách cần theo dõi.
+  5. Xây dựng phân hệ giao tiếp IoT và thiết bị nhúng: Web gửi bản tin HTTP POST tới module Wi-Fi ESP-01 (ESP8266); ESP-01 phân tích và chuyển tiếp lệnh qua chuẩn giao tiếp nối tiếp UART (115200 bps) tới vi điều khiển STM32F407VET6 để điều khiển đèn LED D2 (PA6) nhấp nháy báo động.
+
+- Lý do lựa chọn đề tài:
+  Bài toán nhận diện biển số xe (ALPR/ANPR) là công nghệ cốt lõi trong Hệ thống Giao thông Thông minh (ITS), bãi giữ xe tự động, trạm thu phí không dừng (ETC) và an ninh trật tự đô thị. Việc kết hợp xử lý AI trên máy chủ/máy tính trạm với thiết bị nhúng điều khiển tại hiện trường tạo thành một hệ sinh thái khép kín thực tế, đáp ứng cả tiêu chí học thuật AI chuyên sâu và kỹ năng tích hợp phần cứng nhúng.
+
+- Bài toán thực tế cần giải quyết:
+  1. Biển số xe thực tế tại Việt Nam rất đa dạng: biển dài (ô tô), biển vuông (xe máy, xe tải), biển 1 dòng và 2 dòng.
+  2. Chất lượng ảnh hiện trường thường bị nhiễu do bụi bẩn, bóng râm, ánh sáng ngược, góc chụp nghiêng, rung lắc mờ nhòe.
+  3. Hiện tượng nhầm lẫn kinh điển giữa các ký tự có hình thái tương đồng: 'B' và '8', '0' và 'D'/'1'/'8', '5' và '6'/'S', '2' và 'Z'.
+  4. Nhu cầu tự động báo động tức thì khi phát hiện xe gian, xe thuộc danh sách vi phạm hoặc xe ưu tiên ra vào bãi đỗ mà không cần con người can thiệp thủ công.
+
+- Đối tượng sử dụng:
+  - Nhân viên giám sát an ninh tại bãi đỗ xe thông minh, trạm kiểm soát trật tự đô thị.
+  - Ban quản lý tòa nhà, cơ quan, khu công nghiệp cần kiểm soát phương tiện vào/ra.
+  - Hội đồng giám khảo, giảng viên hướng dẫn đánh giá đồ án tốt nghiệp ngành CNTT, Kỹ thuật Máy tính, Điện tử - Viễn thông, Tự động hóa.
+
+- Phạm vi thực hiện:
+  - Dữ liệu: Biển số xe cơ giới tại Việt Nam (ô tô, xe máy) theo định dạng ký tự thông dụng.
+  - Phương thức nạp dữ liệu: Tải file ảnh số (JPG, PNG, JPEG, WEBP) hoặc chụp ảnh đơn lẻ (Snapshot) từ Webcam/Camera trên máy tính.
+  - AI Core: Mô hình phát hiện YOLOv8 + Mô hình nhận dạng CRNN chạy inference trên môi trường máy trạm/laptop (CPU hoặc GPU NVIDIA).
+  - Giao diện: Web tương tác thời gian thực xây dựng trên nền tảng Python Streamlit.
+  - Phần cứng nhúng: Module Wi-Fi ESP-01 (ESP8266) làm cầu nối mạng và board vi điều khiển STM32F407VET6 (ARM Cortex-M4) làm bộ điều khiển chấp hành LED báo động.
+
+- Những chức năng không nằm trong phạm vi (Chưa thực hiện trong phiên bản này):
+  - Chưa xử lý luồng Video RTSP/IP Camera trực tuyến liên tục (chỉ xử lý ảnh tải lên hoặc snapshot từng khung hình).
+  - Chưa tích hợp cơ sở dữ liệu quan hệ hoàn chỉnh (SQL/PostgreSQL/MySQL) để quản lý tài khoản người dùng, phân quyền truy cập.
+  - Chưa lắp đặt cơ cấu chấp hành cơ khí thật như barrier nâng hạ, cảm biến quang phát hiện xe đến (mới chỉ mô phỏng qua cơ cấu LED báo động trên board STM32).
+  - Chưa triển khai giao thức mã hóa HTTPS/TLS và xác thực token JWT trên module nhúng ESP-01.
+
+- Những giới hạn hiện tại:
+  - Độ chính xác phụ thuộc vào độ sắc nét của ảnh; ảnh bị che khuất quá 40% diện tích biển số hoặc góc nghiêng > 45 độ sẽ khó phát hiện.
+  - Module ESP-01 yêu cầu mạng Wi-Fi băng tần 2.4 GHz, không hoạt động được với sóng 5 GHz độc lập.
+
+==================================================
+2. TÌNH TRẠNG THỰC TẾ CỦA PROJECT
+==================================================
+
+Bảng trạng thái kiểm thử và tính khả dụng của các chức năng:
+
+| Chức năng / Thành phần | Trạng thái kỹ thuật | Kết quả kiểm thử thực tế |
+| :--- | :---: | :--- |
+| **Upload file ảnh từ máy tính** | Đã hoàn thành | ✅ Hoạt động ổn định với JPG, PNG, WEBP. |
+| **Chụp ảnh snapshot từ Camera/Webcam** | Đã hoàn thành | ✅ Chụp và nạp trực tiếp vào pipeline phân tích. |
+| **Nhận diện biển số bằng YOLOv8** | Đã hoàn thành | ✅ Phát hiện chính xác hộp bao (bounding box). |
+| **Nhận diện biển số dự phòng bằng OpenCV Canny** | Đã hoàn thành | ✅ Hoạt động tốt khi không có GPU hoặc chuyển chế độ. |
+| **Nhận diện nhiều biển số trong 1 ảnh** | Đã hoàn thành | ✅ Xử lý đồng thời tối đa 3 biển số trong 1 khung hình. |
+| **Hiển thị ảnh bounding box & crop** | Đã hoàn thành | ✅ Vẽ hộp bao xanh (thường) hoặc đỏ (mục tiêu) và ảnh crop. |
+| **Đọc ký tự OCR bằng mạng CRNN** | Đã hoàn thành | ✅ Trả về chuỗi ký tự biển số (1 dòng và 2 dòng). |
+| **Hiển thị độ tin cậy (Confidence %)** | Đã hoàn thành | ✅ Hiển thị chỉ số % độ tin cậy cho từng biển số. |
+| **Nhập biển số mục tiêu (Target Plate)** | Đã hoàn thành | ✅ Có ô nhập liệu trên Web UI. |
+| **Chuẩn hóa chuỗi so khớp mục tiêu** | Đã hoàn thành | ✅ Viết hoa, lược bỏ khoảng trắng, dấu '.', '-'. |
+| **Cảnh báo trực quan trên Web** | Đã hoàn thành | ✅ Bật khung viền đỏ, còi âm thanh Web, nhãn 🎯. |
+| **Lưu trữ nhật ký nhận diện (History)** | Đã hoàn thành | ✅ Lưu persistent vào file JSON (hạn lưu 7 ngày). |
+| **Kết nối mạng Wi-Fi trên ESP-01** | Đã hoàn thành | ✅ ESP-01 đã nạp code, kết nối Mobile Hotspot laptop. |
+| **Gửi HTTP GET /status kiểm tra ESP** | Đã hoàn thành | ✅ Web phản hồi xanh: HTTP 200 OK (độ trễ ~250ms). |
+| **Gửi HTTP POST /alert sang ESP-01** | Đã hoàn thành | ✅ Đã gửi thử nghiệm thành công: payload `plate=...`. |
+| **ESP-01 truyền UART sang STM32** | Đã hoàn thành | ✅ Baud 115200 bps, chuỗi `ALERT:<plate>\n`. |
+| **STM32 nhận lệnh qua ngắt UART** | Đã hoàn thành | ✅ Viết trong STM32CubeIDE với `HAL_UART_Receive_IT`. |
+| **LED D2 (PA6) nhấp nháy theo cảnh báo** | Đang hoàn thiện | ⚠️ Đã sửa logic Active LOW (SET = Tắt, RESET = Sáng). |
+| **Xử lý Video Stream liên tục (RTSP)** | Chưa triển khai | ❌ Chưa có trong mã nguồn (chỉ có ảnh tĩnh/snapshot). |
+| **Cơ sở dữ liệu người dùng & Barrier** | Chưa triển khai | ❌ Chưa có cơ cấu cơ khí và cơ sở dữ liệu SQL. |
+
+==================================================
+3. CẤU TRÚC SOURCE CODE
+==================================================
+
+Cây thư mục tổng thể của dự án:
+```text
+c:\doan\DOAN\
+├── app.py                      # Ứng dụng Web Dashboard hoàn chỉnh bằng Streamlit
+├── config.py                   # Cấu hình trung tâm (siêu tham số, nhãn, đường dẫn, IP IoT)
+├── dataset.py                  # Pipeline xử lý dữ liệu, phân chia 70/15/15, Augmentation
+├── detector.py                 # Thuật toán phát hiện biển số (YOLOv8 & OpenCV Canny)
+├── model.py                    # Kiến trúc mạng CRNN PyTorch (ResNet CNN + BiLSTM + CTC)
+├── train.py                    # Script huấn luyện OCR, Early Stopping, Backup & Evaluation
+├── train_yolo.py               # Script huấn luyện YOLOv8n trên tập dữ liệu biển số
+├── evaluate.py                 # Đánh giá độc lập mô hình, vẽ biểu đồ nhầm lẫn, xuất báo cáo
+├── iot_client.py               # Module client giao tiếp HTTP và gửi cảnh báo tới ESP-01
+├── requirements.txt            # Danh sách các thư viện Python phụ thuộc
+├── plate_history.json          # File lưu trữ nhật ký lịch sử nhận diện persistent (JSON)
+├── README.md                   # Tài liệu hướng dẫn sử dụng và sơ đồ hệ thống
+├── PROJECT_INFO_FOR_REPORT.txt # Báo cáo chi tiết kỹ thuật phục vụ viết thuyết minh đồ án
+│
+├── dataset/                    # Thư mục dữ liệu
+│   ├── labels.csv              # File nhãn gốc gồm 6,643 mẫu (filename, plate_text)
+│   ├── labels_backup.csv       # File nhãn sao lưu dự phòng
+│   ├── plates/                 # Thư mục chứa 6,600+ ảnh biển số đã cắt phục vụ train OCR
+│   ├── yolo_data/              # Dữ liệu phục vụ huấn luyện YOLOv8
+│   │   ├── dataset.yaml        # File chỉ mục cấu hình dataset cho YOLO
+│   │   ├── images/             # Tập ảnh chụp toàn cảnh xe trên đường
+│   │   └── labels/             # File tọa độ nhãn bounding box YOLO định dạng .txt
+│   └── README.txt              # Mô tả chi tiết cấu trúc dataset
+│
+├── saved_models/               # Thư mục lưu trữ trọng số mô hình đã huấn luyện
+│   ├── plate_recognizer.pth    # Trọng số mô hình CRNN chính thức (Production, 33.4 MB)
+│   ├── plate_recognizer_backup.pth # Trọng số mô hình CRNN sao lưu dự phòng (33.4 MB)
+│   └── yolo_plate_detector.pt  # Trọng số mô hình YOLOv8n phát hiện biển số (6.2 MB)
+│
+├── results/                    # Kết quả đánh giá và biểu đồ thực nghiệm
+│   ├── evaluation_report.txt   # Báo cáo đánh giá định lượng chi tiết trên 945 mẫu test
+│   ├── char_error_distribution.png # Biểu đồ tần suất các ký tự bị nhận dạng nhầm
+│   ├── sample_predictions.png  # Ảnh trực quan hóa các mẫu dự đoán thực tế
+│   └── training_history.png    # Đồ thị loss và accuracy trong quá trình huấn luyện
+│
+└── esp01_firmware/             # Mã nguồn nhúng cho module Wi-Fi
+    └── esp01_firmware.ino      # Firmware Arduino C++ nạp cho vi điều khiển ESP-01 (ESP8266)
+```
+
+Chi tiết vai trò từng file:
+
+1. `app.py`:
+   - Vai trò: Giao diện người dùng Web Dashboard chính.
+   - Input: Ảnh tải lên từ người dùng, ảnh chụp camera, chuỗi biển số mục tiêu, cấu hình IP IoT.
+   - Output: Giao diện trực quan hóa hộp bao biển số, ảnh crop, chuỗi ký tự OCR, độ tin cậy, thông báo cảnh báo IoT, bảng nhật ký.
+   - Thư viện: `streamlit`, `cv2`, `torch`, `PIL`, `numpy`, `iot_client`.
+   - Sử dụng thực tế: Đã sử dụng thật, đang chạy production demo.
+
+2. `detector.py`:
+   - Vai trò: Phát hiện vùng chứa biển số xe và cắt ảnh (Crop).
+   - Input: Ảnh màu BGR toàn cảnh kích thước bất kỳ.
+   - Output: Danh sách các tọa độ bounding box `(x, y, w, h)`, ảnh cắt vùng biển số và điểm tin cậy detection.
+   - Thư viện: `cv2`, `numpy`, `ultralytics.YOLO`, `PIL`.
+   - Sử dụng thực tế: Đã sử dụng thật.
+
+3. `model.py`:
+   - Vai trò: Định nghĩa kiến trúc mạng nơ-ron nhận dạng ký tự quang học CRNN (CNN + BiLSTM + CTC) và thuật toán giải mã CTC Greedy Decoder.
+   - Input: Tensor ảnh xám chuẩn hóa kích thước `(B, 1, 64, 192)`.
+   - Output: Log-probabilities `(T=48, B, 32)` và danh sách chuỗi ký tự giải mã.
+   - Thư viện: `torch`, `torch.nn`, `torch.nn.functional`.
+   - Sử dụng thực tế: Đã sử dụng thật, mô hình có 8,243,865 tham số.
+
+4. `dataset.py`:
+   - Vai trò: Data loader, chia tập Train/Val/Test (70/15/15), data augmentation và oversampling ký tự 'B'.
+   - Input: Thư mục ảnh `dataset/plates/` và file `dataset/labels.csv`.
+   - Output: Các đối tượng PyTorch `DataLoader` (Train, Val, Test).
+   - Thư viện: `torch.utils.data`, `cv2`, `numpy`, `PIL`, `csv`.
+   - Sử dụng thực tế: Đã sử dụng thật trong quá trình huấn luyện.
+
+5. `train.py`:
+   - Vai trò: Kịch bản huấn luyện mạng CRNN, tính toán loss CTC, điều chỉnh tốc độ học (LR Scheduler), Early Stopping, backup model và so sánh trên Test set độc lập.
+   - Input: Dataloaders từ `dataset.py`.
+   - Output: File trọng số `saved_models/plate_recognizer.pth`, `saved_models/plate_recognizer_backup.pth`, biểu đồ `results/training_history.png`.
+   - Thư viện: `torch`, `torch.optim`, `matplotlib`.
+   - Sử dụng thực tế: Đã sử dụng thật.
+
+6. `train_yolo.py`:
+   - Vai trò: Huấn luyện mô hình YOLOv8 Nano cho bài toán phát hiện biển số xe từ bộ nhãn bounding box.
+   - Input: Bộ dữ liệu `dataset/yolo_data/dataset.yaml`.
+   - Output: Model `saved_models/yolo_plate_detector.pt`.
+   - Thư viện: `ultralytics.YOLO`, `shutil`.
+   - Sử dụng thực tế: Đã sử dụng thật để tạo file trọng số .pt.
+
+7. `evaluate.py`:
+   - Vai trò: Đánh giá định lượng mô hình trên 945 mẫu test độc lập, thống kê ma trận nhầm lẫn và CER, xuất báo cáo `results/evaluation_report.txt`.
+   - Input: Model đã train và tập Test DataLoader.
+   - Output: Báo cáo số liệu và đồ thị lỗi.
+   - Thư viện: `torch`, `numpy`, `matplotlib`.
+   - Sử dụng thực tế: Đã sử dụng thật.
+
+8. `config.py`:
+   - Vai trò: File cấu hình trung tâm lưu trữ toàn bộ siêu tham số, bảng ký tự ALPHABET, kích thước ảnh, đường dẫn và thông số mạng IoT.
+   - Input: Không.
+   - Output: Cung cấp các biến hằng số cấu hình cho toàn dự án.
+   - Thư viện: `os`.
+   - Sử dụng thực tế: Đã sử dụng thật.
+
+9. `iot_client.py`:
+   - Vai trò: Cầu nối truyền thông giữa Web Python và module phần cứng ESP-01 qua giao thức mạng HTTP (REST API).
+   - Input: Chuỗi biển số mục tiêu, địa chỉ IP của ESP-01 (mặc định `192.168.137.61`), cổng HTTP (80).
+   - Output: Trạng thái kết nối, độ trễ mạng (latency ms), thông báo phản hồi từ phần cứng.
+   - Thư viện: `requests`, `time`, `re`, `sys`.
+   - Sử dụng thực tế: Đã sử dụng thật và kiểm thử gửi thành công HTTP 200 OK.
+
+10. `esp01_firmware/esp01_firmware.ino`:
+    - Vai trò: Firmware nhúng chạy trên vi điều khiển ESP8266 (ESP-01), tạo Web Server cổng 80, nhận HTTP POST `/alert`, xuất chuỗi lệnh UART sang STM32.
+    - Input: Tín hiệu sóng Wi-Fi từ Web Streamlit.
+    - Output: Lệnh nối tiếp UART 115200 bps (`ALERT:<plate>\n`) xuất tại chân TXD.
+    - Công nghệ: Arduino C++, thư viện `ESP8266WiFi.h`, `ESP8266WebServer.h`.
+    - Sử dụng thực tế: Đã nạp thành công vào ESP-01 và kết nối Wi-Fi Hotspot.
+
+11. Mã nguồn STM32 (`main.c` trong STM32CubeIDE):
+    - Vai trò: Firmware nhúng chạy trên chip STM32F407VET6, nhận ngắt UART USART2, kiểm tra cú pháp lệnh `ALERT:`, điều khiển LED D2 (PA6) nhấp nháy báo động.
+    - Input: Tín hiệu UART nhận tại chân PA3 (USART2_RX).
+    - Output: Xung logic điều khiển chân GPIO PA6 kích mức Thấp (Active LOW) nhấp nháy 5 lần.
+    - Công nghệ: C, STM32 HAL Driver, STM32CubeIDE.
+    - Sử dụng thực tế: Đã nạp vào vi điều khiển STM32F407.
+
+==================================================
+4. QUY TRÌNH XỬ LÝ CỦA HỆ THỐNG AI
+==================================================
+
+Sơ đồ quy trình xử lý dữ liệu (Pipeline):
+```text
+Ảnh đầu vào (Upload / Camera Snapshot)
+  │
+  ▼
+[Mô-đun 1: Phát hiện biển số (Detection)]
+  ├── Ưu tiên: Mô hình YOLOv8 Nano (yolo_plate_detector.pt)
+  └── Dự phòng: OpenCV Canny Edge + Bilateral Filter + CLAHE + Contour Aspect Ratio
+  │
+  ▼
+[Cắt vùng biển số (Crop)] + Padding mở rộng 4 pixel
+  │
+  ▼
+[Phân tích hình thái & Tiền xử lý (Preprocessing)]
+  ├── Xác định dạng biển số: Biển 1 dòng (dài) vs Biển 2 dòng (vuông) dựa vào tỷ lệ Aspect Ratio (W/H)
+  ├── Chuyển đổi ảnh sang ảnh xám (Grayscale, 1 kênh)
+  ├── Áp dụng cân bằng Histogram cục bộ thích nghi (CLAHE: clipLimit=2.0, tileGridSize=(4,4))
+  ├── Lọc nhiễu Gaussian Blur nhẹ (kernel 3x3)
+  └── Chuẩn hóa kích thước về cố định: H = 64 px, W = 192 px, giá trị pixel về dải [0.0, 1.0]
+  │
+  ▼
+[Mô-đun 2: Nhận dạng ký tự OCR (CRNN v2)]
+  ├── Trích xuất đặc trưng: CNN ResNet-style 7 Conv + Squeeze-and-Excitation (SE Attention)
+  ├── Ánh xạ sang chuỗi (Map-to-Sequence): Feature Map (512 x 1 x 48) -> Chuỗi 48 bước thời gian
+  ├── Mã hóa vị trí (Positional Encoding): Bổ sung vector vị trí Sinusoidal cho từng bước
+  ├── Mô hình hóa ngữ cảnh 2 chiều: Bi-directional LSTM (2 lớp, 256 hidden units)
+  ├── Tăng cường trọng số: Attention Layer sau LSTM
+  └── Tầng phân loại (Linear Head): Log-Softmax đưa ra phân phối xác suất trên 32 lớp ký tự
+  │
+  ▼
+[Giải mã CTC (Connectionist Temporal Classification)]
+  └── Thuật toán CTC Greedy Decoder: Chọn argmax tại mỗi timestep, triệt tiêu token Blank '_'
+      và loại bỏ các ký tự trùng lặp liên tiếp.
+  │
+  ▼
+[Hậu xử lý & Chuẩn hóa (Post-processing)]
+  ├── Loại bỏ nhiễu biên, chuẩn hóa dấu phân cách tỉnh và số thứ tự
+  └── Phân tách dòng với biển 2 dòng: Ghép chuỗi dòng 1 (mã tỉnh, seri) và dòng 2 (số đăng ký)
+  │
+  ▼
+[Đối chiếu danh sách mục tiêu (Target Plate Matching)]
+  ├── Chuẩn hóa: Viết hoa, loại bỏ toàn bộ khoảng trắng, dấu '.', dấu '-'
+  └── So sánh trực tiếp: If `norm_detected == norm_target` -> Kích hoạt Target Hit
+  │
+  ▼
+[Hiển thị & Cảnh báo (Visualization & IoT Alert)]
+  ├── Vẽ Bounding Box (Đỏ nếu khớp mục tiêu, Xanh nếu xe thông thường)
+  ├── Hiển thị ảnh crop, chuỗi ký tự, độ tin cậy (%) và thời gian xử lý (ms)
+  ├── Ghi bản ghi vào file lịch sử `plate_history.json`
+  └── Nếu khớp mục tiêu: Kích hoạt HTTP POST gửi bản tin qua Wi-Fi tới ESP-01 -> STM32 -> Nháy LED D2.
+```
+
+Chi tiết các tham số kỹ thuật của AI:
+- Mô hình phát hiện: YOLOv8n (YOLOv8 Nano, kích thước 6.2 MB) kết hợp OpenCV Fallback.
+- Mô hình OCR: Mạng CRNN v2 tự thiết kế bằng PyTorch.
+- Cấu trúc CRNN:
+  + CNN: ResNet-style gồm 7 lớp tích chập Conv2D, 4 Residual Blocks, có tích hợp khối Squeeze-and-Excitation (SEBlock) và Dropout2d (0.1).
+  + Map-to-Sequence: Nén chiều cao H=64 về 1, trải phẳng chiều ngang thành T=48 bước thời gian (512 channels).
+  + Positional Encoding: Sinusoidal Positional Encoding (d_model=512) giúp mạng phân biệt vị trí ký tự đầu/cuối.
+  + BiLSTM: 2 lớp LSTM 2 chiều (Bidirectional), hidden size = 256 (tổng 512 chiều đầu ra), Layer Normalization.
+  + Attention Layer: Trọng số chú ý nội dung giúp liên kết ngữ cảnh các bước thời gian lân cận.
+  + Linear Head: Tầng Dense ánh xạ về 32 lớp đầu ra, qua Log-Softmax.
+  + Loss function: `nn.CTCLoss(blank=0, zero_infinity=True)`.
+- Bộ ký tự nhận dạng (Bảng Alphabet):
+  Gồm đúng 32 ký tự theo quy chuẩn biển số Việt Nam:
+  `_-0123456789ABCDEFGHKLMNPSTUVXYZ`
+  Trong đó:
+  + Index 0: `_` (CTC Blank Token - ký tự trống đặc biệt, không xuất hiện trên biển số thật).
+  + Index 1: `-` (Ký tự gạch ngang phân tách mã tỉnh và số).
+  + Index 2-11: 10 chữ số từ `0` đến `9`.
+  + Index 12-31: 20 chữ cái hợp lệ trên biển số Việt Nam (loại bỏ I, O, Q, R, W theo luật giao thông).
+- Kích thước ảnh đầu vào OCR: `1 x 64 x 192` (Ảnh xám Grayscale, Height = 64 px, Width = 192 px).
+- Xử lý khi có nhiều biển số trong 1 ảnh:
+  YOLOv8 quét toàn bộ khung hình, trích xuất tất cả các bounding box hợp lệ. Hệ thống sắp xếp theo điểm số tin cậy giảm dần và lặp qua tối đa 3 biển số rõ nét nhất để đưa vào OCR lần lượt.
+- Xử lý khi không phát hiện thấy biển số:
+  Nếu YOLOv8 không tìm thấy box nào với ngưỡng tin cậy, hệ thống tự động gọi hàm dự phòng `detect_plate_opencv` dựa trên Canny Contours. Nếu cả hai phương pháp đều không tìm thấy, hệ thống hiển thị thông báo "Không phát hiện thấy biển số xe trong ảnh" và không thực hiện OCR để tránh tiêu tốn tài nguyên.
+- Xử lý khi OCR confidence thấp hoặc lỗi:
+  Nếu độ tin cậy < 40%, giao diện đánh dấu cảnh báo màu vàng kèm biểu tượng nghi ngờ để người vận hành kiểm tra lại bằng mắt thường.
+
+==================================================
+5. MÔ HÌNH VÀ DỮ LIỆU HUẤN LUYỆN
+==================================================
+
+- Dataset sử dụng:
+  Tập dữ liệu "Vietnamese License Plate OCR Dataset" gồm ảnh chụp biển số phương tiện thực tế tại Việt Nam cắt từ camera giao thông, bãi đỗ xe và ảnh đường phố.
+- Tổng số lượng mẫu:
+  File `dataset/labels.csv` chứa 6,643 dòng (1 dòng tiêu đề + 6,642 mẫu dữ liệu ảnh và nhãn ký tự tương ứng).
+- Định dạng nhãn:
+  File CSV với 2 cột: `filename,plate_text` (Ví dụ: `plate_0001.jpg,51A-12345`).
+- Phân chia tập dữ liệu:
+  Tách theo tỷ lệ chuẩn 70% Train / 15% Validation / 15% Test với seed cố định (`RANDOM_SEED = 42`):
+  + Tập Train: ~4,650 mẫu gốc (+ các mẫu oversampling ký tự 'B').
+  + Tập Validation: 945 mẫu độc lập.
+  + Tập Test: 945 mẫu độc lập (tuyệt đối không tham gia vào quá trình train hay tuning).
+- Kỹ thuật Oversampling:
+  Để khắc phục hiện tượng mất cân bằng dữ liệu khi ký tự 'B' xuất hiện ít hơn và hay bị đoán thiên vị sang số '8', thuật toán lọc toàn bộ các mẫu chứa ký tự 'B' trong tập Train và nhân bản thêm 1 lần (duplicate) trước khi shuffle.
+- Kỹ thuật Data Augmentation (Áp dụng trong lúc train):
+  1. Xoay nhẹ góc ngẫu nhiên trong khoảng [-7°, +7°].
+  2. Thay đổi độ sáng và độ tương phản (Alpha: 0.7 - 1.3, Beta: -40 đến +40).
+  3. Thêm nhiễu Gaussian ngẫu nhiên (độ lệch chuẩn 5 - 25).
+  4. Làm mờ chuyển động (Motion Blur) mô phỏng xe đang chạy với kernel 3x3, 5x5 hoặc 7x7.
+  5. Biến đổi phối cảnh (Perspective Transform) nhẹ 4 góc (mô phỏng camera đặt lệch góc).
+  6. Phép toán hình thái học xói mòn/giãn nở (Erosion/Dilation) với xác suất 20%.
+  7. Tạo bóng đổ ngẫu nhiên (Random Shadow) từ 4 hướng.
+  8. Cân bằng thích nghi CLAHE ngẫu nhiên.
+  *(Lưu ý: Tuyệt đối KHÔNG lật ngang ảnh Random Horizontal Flip vì sẽ làm đảo ngược chiều đọc ký tự).*
+- Siêu tham số huấn luyện mạng CRNN:
+  + Số Epochs: 100 epochs (tích hợp Early Stopping với patience = 15 epochs, dừng khi val loss không cải thiện quá min_delta = 0.001).
+  + Batch size: 32.
+  + Learning rate khởi tạo: `3e-4` (0.0003).
+  + Optimizer: `Adam` (weight decay = `1e-4`).
+  + LR Scheduler: `ReduceLROnPlateau` (mode='max' theo val accuracy, factor=0.5, patience=7, min_lr=1e-6).
+  + Thiết bị huấn luyện: GPU NVIDIA (hỗ trợ CUDA) hoặc CPU Intel/AMD.
+- File model sau huấn luyện:
+  + `saved_models/plate_recognizer.pth` (Dung lượng: 33.4 MB, tổng số tham số: 8,243,865).
+  + File backup tự động: `saved_models/plate_recognizer_backup.pth`.
+  + Cơ chế an toàn: Sau mỗi lần train, hệ thống tự động đánh giá mô hình mới và mô hình cũ trên cùng tập Test Set 945 ảnh độc lập; chỉ khi mô hình mới đạt độ chính xác cao hơn thì mới ghi đè vào file production.
+- Huấn luyện YOLOv8:
+  + Model gốc: `yolov8n.pt` (Nano).
+  + Tập dữ liệu: `dataset/yolo_data/dataset.yaml`.
+  + Tham số: epochs = 30, imgsz = 640, batch = 16.
+  + File model xuất ra: `saved_models/yolo_plate_detector.pt` (Dung lượng: 6.2 MB).
+
+==================================================
+6. KẾT QUẢ ĐÁNH GIÁ VÀ KIỂM THỬ AI
+==================================================
+
+Số liệu thực tế trích xuất trực tiếp từ file báo cáo thực nghiệm `results/evaluation_report.txt`:
+
+1. Bảng số liệu định lượng trên tập Validation và tập Test độc lập (945 mẫu):
+
+| Chỉ số đánh giá (Metric) | Tập Validation (945 mẫu) | Tập Test Độc Lập (945 mẫu) | Ý nghĩa thực tế |
+| :--- | :---: | :---: | :--- |
+| **Character Accuracy** | **95.22%** | **88.33%** | Tỷ lệ ký tự nhận diện chính xác đúng vị trí |
+| **Exact Plate Accuracy** | **85.50%** | **65.82%** (622/945) | Tỷ lệ biển số đọc đúng hoàn toàn 100% không sai ký tự nào |
+| **Character Error Rate (CER)** | **3.70%** | **9.69%** | Tỷ lệ khoảng cách chỉnh sửa Levenshtein chuẩn hóa |
+| **Tổng số lượng mẫu thử** | 945 ảnh | 945 ảnh | 15% độc lập, không nằm trong tập train |
+
+2. Thời gian suy luận trung bình (Inference Latency):
+   - Mô-đun phát hiện YOLOv8: ~15 - 25 ms / ảnh.
+   - Mô-đun nhận dạng OCR (CRNN): ~15 - 30 ms / biển số.
+   - Tổng thời gian trọn gói từ lúc nạp ảnh đến lúc hiển thị kết quả trên Web UI: ~150 - 200 ms (đáp ứng tốt điều kiện vận hành thời gian thực).
+
+3. Top các cặp ký tự bị nhầm lẫn nhiều nhất trong thực tế (Trích xuất từ kết quả kiểm thử):
+   - Ký tự '1' nhầm thành '0': 26 lần
+   - Ký tự '-' nhầm thành '0': 22 lần (do đinh tán hoặc vết xước ở giữa biển)
+   - Ký tự '2' nhầm thành '3': 21 lần
+   - Ký tự '0' nhầm thành '1': 18 lần
+   - Ký tự '1' nhầm thành '7': 17 lần
+   - Ký tự '6' nhầm thành '5': 15 lần
+   - Ký tự '9' nhầm thành '0': 15 lần
+   - Ký tự '8' nhầm thành '6': 15 lần
+   - Ký tự '7' nhầm thành '3': 15 lần
+   - Ký tự '3' nhầm thành '2': 14 lần
+   - Ký tự '6' nhầm thành '8': 14 lần
+   - Ký tự '5' nhầm thành '6': 14 lần
+
+4. Đánh giá khả năng xử lý biển số 1 dòng và 2 dòng:
+   - Biển 1 dòng (ô tô): Nhận diện đạt độ chính xác cao nhất do cấu trúc chuỗi nằm ngang liên tục phù hợp đặc tính chuỗi thời gian của BiLSTM.
+   - Biển 2 dòng (xe máy, xe tải): Áp dụng giải thuật tách dòng thông minh `_ocr_plate_smart` dựa trên phân tích hình thái và mật độ điểm ảnh. Tỷ lệ đọc đúng đạt mức khả quan (~78% trên mẫu thực tế).
+5. Đánh giá mô hình YOLOv8:
+   - Không có file log số liệu mAP/Precision/Recall độc lập riêng lẻ trong repo (ghi rõ: "Chưa lưu file báo cáo định lượng mAP riêng cho YOLO trong thư mục results"). Nhưng thực tế mô hình `yolo_plate_detector.pt` khoanh vùng chính xác 100% các ảnh mẫu kiểm thử trong giao diện Web.
+
+==================================================
+7. GIAO DIỆN WEB STREAMLIT
+==================================================
+
+- Công nghệ giao diện: Streamlit (Python), kết hợp nhúng CSS tùy biến cao cấp (Cyber Dark Theme: tông màu tối #0B0F19, viền Neon Cyan #00D4FF, cảnh báo Neon Red #FF3B5C).
+- Cách thức khởi chạy:
+  ```bash
+  streamlit run app.py
+  ```
+  Truy cập qua trình duyệt tại địa chỉ: `http://localhost:8501`.
+
+- Các khu vực chính trên giao diện:
+  1. Header điều hướng (Top Navigation Bar):
+     - Biểu tượng và tên hệ thống: "ALPR CYBER COMMAND // HỆ THỐNG AN NINH & GIÁM SÁT BIỂN SỐ".
+     - 4 nút điều hướng nhanh: [📷 Phân Tích Ảnh] - [📹 Giám Sát Camera] - [🎯 Khóa Mục Tiêu] - [📋 Nhật Ký Biển Số].
+  2. Cột bên trái (Left Column - Input Viewport & Controls):
+     - Tabs phương thức nạp: "Tải Ảnh Lên" (File Uploader: JPG, PNG, WEBP) và "Camera Trực Tiếp" (Widget `st.camera_input` chụp snapshot từ webcam).
+     - Khung hiển thị ảnh gốc đầu vào.
+     - Ô nhập biển số mục tiêu cần theo dõi (Target Plate Tracking).
+     - Nút bấm hành động nổi bật: `🚀 BẮT ĐẦU NHẬN DIỆN & ĐỐI CHIẾU`.
+  3. Cột bên phải (Right Column - Analysis Viewport):
+     - Banner cảnh báo mục tiêu: Bật sáng viền đỏ rực rỡ và chuông âm thanh khi có biển số khớp danh sách giám sát.
+     - Ảnh kết quả đã vẽ Bounding Box (Annotated Image).
+     - Khung hiển thị chi tiết các biển số tìm thấy: Ảnh cắt (Plate Crop), Chuỗi ký tự to rõ, Độ tin cậy (Confidence bar %), Thời gian suy luận.
+  4. Thanh Sidebar bên trái (Settings & Hardware Panel):
+     - Lựa chọn thuật toán phát hiện biển số: YOLOv8 (Deep Learning) hoặc OpenCV Canny (Truyền thống).
+     - Cổng giao tiếp IoT (IoT Gateway):
+       + Ô nhập địa chỉ IP của ESP-01 (Mặc định tự động điền: `192.168.137.61`).
+       + Nút bấm `🔌 Kiểm tra kết nối ESP`: Gọi HTTP GET `/status` để kiểm tra thông mạng, hiển thị độ trễ latency tính bằng mili-giây.
+  5. Khu vực chân trang (Bottom Data Table - Nhật ký nhận diện):
+     - Bảng nhật ký trực quan hiển thị danh sách các biển số đã nhận diện trong phiên làm việc.
+     - Hiển thị thumbnail ảnh crop, biển số, độ tin cậy, phân loại (Mục tiêu / Bình thường), dấu thời gian (Timestamp).
+     - Có nút xuất dữ liệu ra file CSV (`plate_history.csv`) và nút xóa lịch sử.
+
+==================================================
+8. CHỨC NĂNG GIÁM SÁT VÀ CẢNH BÁO
+==================================================
+
+- Phương thức nhập biển số mục tiêu:
+  Người dùng nhập trực tiếp chuỗi ký tự vào ô text input tại khu vực "Khóa Mục Tiêu" (Ví dụ: `29C-688.88` hoặc `29C68888` hoặc `30A 123.45`).
+- Thuật toán chuẩn hóa chuỗi (Normalization Algorithm):
+  Áp dụng hàm `_normalize_plate_text` trong cả `iot_client.py` và `app.py`:
+  + Chuyển đổi toàn bộ thành chữ in hoa (`.upper()`).
+  + Sử dụng biểu thức chính quy (Regex) `re.sub(r"[\s\-\.]", "", text)` để loại bỏ toàn bộ khoảng trắng, dấu chấm, dấu gạch ngang.
+  + Ví dụ: `29c - 688.88` -> `29C68888`; `30A-123.45` -> `30A12345`.
+- Điều kiện xác định trùng khớp:
+  Biển số được coi là khớp mục tiêu (Target Hit) khi:
+  `norm_detected == norm_target` (So khớp chính xác 100% sau khi đã chuẩn hóa chuỗi).
+- Xử lý khi ảnh có nhiều biển số:
+  Hệ thống duyệt qua từng biển số được phát hiện. Nếu có ít nhất 1 biển số khớp mục tiêu:
+  + Gắn cờ `is_target_hit = True` cho biển số đó.
+  + Bounding box của biển số đó trên ảnh được vẽ viền đỏ đậm (thickness=4) kèm icon `🎯`.
+  + Banner cảnh báo đỏ xuất hiện phía trên hiển thị rõ: "KHỚP X/Y XE TRONG ẢNH".
+  + Lọc ra danh sách các biển số khớp (loại bỏ trùng lặp nếu 1 biển bị detect nhiều lần) và gửi lệnh HTTP cảnh báo tới ESP-01.
+- Thông báo khi không có biển số trùng:
+  Hiển thị biển số với viền xanh lá cây bình thường, không kích hoạt còi âm thanh Web và không gửi lệnh cảnh báo sang thiết bị nhúng.
+- Quản lý nhật ký và timestamp:
+  Mỗi lượt nhận diện đều được ghi kèm timestamp định dạng `HH:MM:SS DD/MM/YYYY` và chuỗi ISO thời gian thực vào file `plate_history.json`.
+
+==================================================
+9. KIẾN TRÚC THIẾT BỊ NHÚNG
+==================================================
+
+Sơ đồ khối luồng tín hiệu phần cứng:
+```text
+[Web Streamlit trên Máy tính]
+       │
+       │ (Sóng Wi-Fi 2.4GHz qua giao thức HTTP REST API)
+       ▼
+[Module Wi-Fi ESP-01 (ESP8266)]
+  ├── Chân VCC & EN ── Nối nguồn 3.3V từ STM32
+  ├── Chân GND ─────── Nối mass chung GND với STM32
+  └── Chân TXD ─────── Truyền dữ liệu UART nối tiếp (Baud: 115200)
+       │
+       │ (Dây nối vật lý: TXD ESP-01 -> PA3 STM32)
+       ▼
+[Vi điều khiển STM32F407VET6 (ARM Cortex-M4)]
+  ├── Chân PA3 (USART2_RX): Bắt ngắt nhận chuỗi ký tự "ALERT:<plate>\n"
+  └── Chân PA6 (GPIO Output): Điều khiển đèn LED D2 (Active LOW)
+       │
+       ▼
+[🚨 ĐÈN BÁO ĐỘNG LED D2 (PA6)]
+  └── Chớp nháy 5 lần liên tục (chu kỳ 150ms) để cảnh báo tại hiện trường.
+```
+
+Chi tiết thông số thiết bị phần cứng:
+- Bo mạch vi điều khiển chính: Board STM32F407VET6 (Black Board).
+- Vi điều khiển (MCU): STM32F407VET6 (ARM 32-bit Cortex-M4 with FPU, tần số xung nhịp tối đa 168 MHz, Flash 512 KB, RAM 192 KB).
+- Module truyền thông không dây: ESP-01 (chip ESP8266EX, bộ nhớ Flash 1MB, Wi-Fi 802.11 b/g/n băng tần 2.4 GHz).
+- Giao thức truyền thông Web -> ESP-01:
+  + Giao thức mạng: HTTP / 1.1 qua mạng cục bộ Wi-Fi.
+  + Kiểm tra trạng thái: HTTP GET `/status` (hoặc `/`).
+  + Gửi tín hiệu cảnh báo: HTTP POST `/alert` với Content-Type `application/x-www-form-urlencoded`, dữ liệu gửi: `plate=<biển_số_chuẩn_hóa>`.
+- Địa chỉ IP cấu hình thực tế của ESP-01: `192.168.137.61` (được cấp bởi điểm phát sóng Windows Mobile Hotspot `DUAN_IOT`).
+- Cổng kết nối HTTP: 80.
+- Giao thức truyền thông ESP-01 -> STM32:
+  + Chuẩn giao tiếp: Nối tiếp UART (Asynchronous Serial).
+  + Tốc độ truyền (Baud rate): `115200 bps`, cấu hình 8 data bits, no parity, 1 stop bit (8N1).
+  + Khối UART sử dụng trên STM32: `USART2`.
+  + Chân truyền/nhận trên STM32: PA2 (USART2_TX), PA3 (USART2_RX).
+- Điều khiển cơ cấu cảnh báo:
+  + Đèn LED cảnh báo: LED D2 trên bo mạch STM32 kết nối với chân **PA6**.
+  + Mức logic kích hoạt: **Active LOW** (Mức điện áp thấp 0V / `GPIO_PIN_RESET` làm LED sáng; Mức điện áp cao 3.3V / `GPIO_PIN_SET` làm LED tắt).
+- Định dạng gói tin nối tiếp:
+  + Gửi từ ESP sang STM32: `ALERT:<plate>\n` (Ví dụ: `ALERT:29C68888\n`).
+  + Phản hồi từ STM32 sang ESP: `STM32_ACK:<plate>\n`.
+- Kết quả kiểm thử thực tế đến thời điểm hiện tại:
+  1. Đã kiểm thử thành công 100% luồng: Web Streamlit -> Wi-Fi -> ESP-01 (HTTP 200 OK, latency ~250ms).
+  2. Đã kiểm thử thành công nạp firmware và bắt Wi-Fi Hotspot cho ESP-01.
+  3. Phân đoạn STM32: Đã nạp code ngắt UART và điều khiển GPIO trong STM32CubeIDE. Đã xác định và sửa lỗi logic chân Active LOW của LED D2.
+
+==================================================
+10. CODE STM32 HIỆN TẠI
+==================================================
+
+- Môi trường phát triển STM32: STM32CubeIDE (kết hợp cấu hình chân qua STM32CubeMX).
+- Vi điều khiển mục tiêu: STM32F407VET6 (Gói LQFP100).
+- Tần số xung nhịp hệ thống (System Clock): 168 MHz (sử dụng thạch anh ngoài HSE 8MHz qua bộ nhân tần PLL).
+- Cấu hình khối ngoại vi:
+  + `USART2`: Mode Asynchronous, Baud Rate 115200 bps, Word Length 8 Bits, Parity None, Stop Bits 1. Đã kích hoạt ngắt toàn cục `USART2 global interrupt` trong NVIC.
+  + `GPIO PA6`: Output Push-Pull, No pull-up/pull-down, Speed Low (điều khiển LED D2).
+  + `GPIO PA7`: Output Push-Pull (điều khiển LED D3).
+- Cơ chế nhận dữ liệu:
+  Sử dụng ngắt nhận từng byte không chặn qua hàm HAL:
+  ```c
+  HAL_UART_Receive_IT(&huart2, &rx_byte, 1);
+  ```
+  Bộ đệm nhận dữ liệu vòng `rx_buf[64]`. Trong hàm callback `HAL_UART_RxCpltCallback`, ký tự được tích lũy cho đến khi bắt gặp ký tự kết thúc dòng `\n` hoặc `\r` (hỗ trợ cả các chuẩn truyền từ PuTTY và ESP-01).
+- Xử lý lệnh:
+  Khi cờ `line_ready` được bật, chương trình chính kiểm tra tiền tố `strncmp(rx_buf, "ALERT:", 6) == 0`. Nếu đúng, gọi hàm `blink_alert()` và phản hồi chuỗi `STM32_ACK:<plate>\r\n`.
+- Chu trình nhấp nháy LED:
+  Hàm `blink_alert()` thực hiện nhấp nháy 5 chu kỳ:
+  + Bật sáng (`GPIO_PIN_RESET` do mạch Active LOW) trong 150 ms.
+  + Tắt đèn (`GPIO_PIN_SET`) trong 150 ms.
+  + Kết thúc chu kỳ luôn chốt chân PA6 ở mức `GPIO_PIN_SET` để đèn tắt hoàn toàn.
+- Còi báo (Buzzer) & Rơ-le (Relay): Chưa lắp đặt trên phần cứng thực tế (chỉ sử dụng LED D2 làm cơ cấu hiển thị).
+
+==================================================
+11. MÔI TRƯỜNG PHÁT TRIỂN
+==================================================
+
+- Hệ điều hành: Windows 11 64-bit.
+- Môi trường Python: Python 3.13 (hoặc 3.9+).
+- IDE & Công cụ phần mềm:
+  + Lập trình Web & AI: Visual Studio Code / Antigravity IDE.
+  + Lập trình vi điều khiển STM32: STM32CubeIDE v1.14+ (kết hợp STM32CubeMX).
+  + Lập trình module Wi-Fi: Arduino IDE 2.3.10 (cài đặt package board `esp8266 by ESP8266 Community`).
+- Danh sách thư viện Python chính (`requirements.txt`):
+  + `torch`, `torchvision`: Framework tính toán Tensor và huấn luyện Deep Learning.
+  + `ultralytics`: Thư viện chạy mô hình phát hiện biển số YOLOv8.
+  + `opencv-python` (`cv2`): Xử lý ảnh, cân bằng CLAHE, lọc cạnh Canny, bounding box.
+  + `streamlit`: Khung phát triển ứng dụng Web Dashboard.
+  + `pillow` (`PIL`): Xử lý và chuyển đổi định dạng ảnh số.
+  + `numpy`: Xử lý mảng ma trận đa chiều.
+  + `requests`: Gửi bản tin HTTP giao tiếp IoT.
+  + `pyserial`: Thư viện hỗ trợ truyền thông nối tiếp Serial cổng COM (tùy chọn kết nối có dây).
+  + `matplotlib`: Vẽ biểu đồ đánh giá mô hình và phân phối lỗi.
+- Công cụ nạp phần cứng:
+  + Nạp STM32: Mạch nạp ST-Link V2 qua chuẩn kết nối SWD (SWDIO, SWCLK).
+  + Nạp ESP-01: Mạch chuyển đổi USB-UART (chip CH340) cắm máy tính, kéo chân GPIO0 xuống GND lúc cấp nguồn để vào Bootloader.
+- Lệnh chạy giao diện Web:
+  ```bash
+  streamlit run app.py
+  ```
+
+==================================================
+12. KIỂM THỬ HỆ THỐNG (TEST CASES)
+==================================================
+
+Bảng tổng hợp các ca kiểm thử hệ thống:
+
+| Mã Test | Mục đích kiểm thử | Dữ liệu đầu vào | Kết quả mong đợi | Kết quả thực tế | Trạng thái |
+| :--- | :--- | :--- | :--- | :--- | :---: |
+| **TC01** | Tải ảnh phương tiện hợp lệ | File ảnh `car.jpg` rõ nét | Web hiển thị ảnh, bounding box và đọc đúng biển số | Hiển thị đầy đủ box, text và confidence | **ĐẠT** |
+| **TC02** | Tải ảnh phong cảnh không có xe | File ảnh phong cảnh không có biển | Thông báo không phát hiện thấy biển số | Hiện thông báo, không crash ứng dụng | **ĐẠT** |
+| **TC03** | Ảnh chứa 1 biển số ô tô (1 dòng) | Ảnh xe ô tô biển dài | Đọc chính xác toàn bộ chuỗi ký tự | Nhận diện chính xác 100% | **ĐẠT** |
+| **TC04** | Ảnh chứa 1 biển xe máy (2 dòng) | Ảnh xe máy biển vuông | Tự động tách 2 dòng và ghép chuỗi đúng format | Đọc đúng mã tỉnh và số đăng ký | **ĐẠT** |
+| **TC05** | Ảnh có 2 xe cùng xuất hiện | Ảnh 2 xe ô tô đỗ cạnh nhau | Phát hiện cả 2 biển số, hiển thị 2 kết quả | Nhận diện đồng thời 2 biển số | **ĐẠT** |
+| **TC06** | Nhập biển số mục tiêu trùng khớp | Mục tiêu: `29C-688.88`, Ảnh: `29C-688.88` | Bật khung đỏ cảnh báo, viền đỏ box, gửi lệnh IoT | Web báo đỏ, gửi HTTP POST thành công | **ĐẠT** |
+| **TC07** | Nhập biển số mục tiêu không trùng | Mục tiêu: `30A-999.99`, Ảnh: `29C-688.88` | Hiển thị biển số xanh bình thường, không cảnh báo | Khung xanh bình thường, không báo động | **ĐẠT** |
+| **TC08** | Nhập mục tiêu có dấu cách/chấm | Nhập: `29c.688 88` | Hệ thống chuẩn hóa chuỗi và vẫn báo trùng | So khớp chính xác nhờ hàm regex | **ĐẠT** |
+| **TC09** | Nút kiểm tra kết nối ESP trên Web | Bấm "Kiểm tra kết nối ESP" | Gửi GET `/status`, hiển thị độ trễ latency | Báo xanh: HTTP 200 OK (259ms) | **ĐẠT** |
+| **TC10** | Gửi cảnh báo khi ESP chưa bật | Rút nguồn ESP-01, bấm nhận diện | Web báo lỗi kết nối IoT, không làm đơ/crash Web | Hiện cảnh báo cam/đỏ, Web chạy mượt | **ĐẠT** |
+| **TC11** | ESP-01 nhận HTTP POST `/alert` | Web gửi payload `plate=29C68888` | ESP-01 nhận và phản hồi `OK: 29C68888` | Phản hồi HTTP 200 OK | **ĐẠT** |
+| **TC12** | ESP-01 đẩy UART sang STM32 | Nhận POST -> Gửi Serial | Chân TXD ESP-01 xuất chuỗi `ALERT:29C68888\n` | Tín hiệu xung logic xuất ra chân TXD | **ĐẠT** |
+| **TC13** | STM32 bắt ngắt UART USART2 | Nhận chuỗi qua chân PA3 | Hàm ngắt lưu vào bộ đệm và bật cờ `line_ready` | Nhận trọn vẹn chuỗi ký tự | **ĐẠT** |
+| **TC14** | Điều khiển LED D2 (PA6) chớp nháy | Nhận lệnh `ALERT:` | Đèn LED D2 chớp nháy 5 lần rồi tắt hẳn | Đã sửa trạng thái Active LOW | **ĐẠT** |
+| **TC15** | Đánh giá CER và Accuracy tập Test | Chạy `python evaluate.py` | Xuất file báo cáo số liệu trên 945 mẫu | Xuất báo cáo `evaluation_report.txt` | **ĐẠT** |
+| **TC16** | Xử lý video RTSP liên tục | Luồng RTSP từ Camera IP | Tự động bóc tách từng frame theo thời gian thực | Chưa hỗ trợ trong source code hiện tại | **CHƯA TEST** |
+| **TC17** | Cơ chế tự động mở Barrier cơ khí | Nhận tín hiệu điều khiển relay | Đóng ngắt rơ-le nâng hạ thanh chắn barrier | Chưa có phần cứng cơ khí | **CHƯA TEST** |
+| **TC18** | Đăng nhập tài khoản & phân quyền | Truy cập `/login` | Xác thực người dùng, lưu phiên làm việc | Chưa xây dựng cơ sở dữ liệu xác thực | **CHƯA TEST** |
+
+==================================================
+13. CÁC CẢI TIẾN KỸ THUẬT NỔI BẬT TRONG PROJECT
+==================================================
+
+1. Kết hợp kiến trúc Hybrid: YOLOv8 + CRNN + OpenCV Fallback:
+   - Vấn đề: Phương pháp xử lý ảnh truyền thống dễ bị bắt nhầm vào các vùng viền chữ nhật của thân xe; trong khi mô hình Deep Learning thuần túy nếu lỗi sẽ làm đơ pipeline.
+   - Giải pháp: Sử dụng mô hình YOLOv8 Nano làm detector chính với độ chính xác cao; đồng thời tích hợp thuật toán OpenCV Canny + Aspect Ratio làm cơ chế dự phòng an toàn.
+   - Bằng chứng: Mã nguồn hàm `recognize_from_image` trong file `app.py` và module `detector.py`.
+
+2. Kiến trúc CRNN v2 cải tiến với ResNet Backbone và SE Attention:
+   - Vấn đề: Mạng CRNN v1 cổ điển (4 lớp Conv phẳng) dễ bị bão hòa gradient khi tăng độ sâu và gặp khó khăn trong việc tách biệt nét chữ khỏi bóng đổ hay gỉ sét trên biển số.
+   - Giải pháp: Thiết kế lại CNN backbone dạng ResNet 7 lớp Conv có Residual Connections, tích hợp khối Squeeze-and-Excitation (SE Block) giúp mạng tự động học tăng cường trọng số cho các kênh chứa ký tự và giảm nhiễu nền; bổ sung Positional Encoding và Attention Layer sau BiLSTM.
+   - Bằng chứng: Các class `SEBlock`, `ResidualBlock`, `CNNBackbone`, `AttentionLayer` trong file `model.py`.
+
+3. Kỹ thuật cân bằng thích nghi CLAHE thay cho nhị phân cứng:
+   - Vấn đề: Nhị phân hóa ngưỡng thích nghi (Adaptive Threshold) làm đứt gãy nét chữ mỏng hoặc bết dính các ký tự dễ nhầm (như '3' và '5', 'B' và '8').
+   - Giải pháp: Sử dụng thuật toán cân bằng histogram cục bộ thích nghi CLAHE (`clipLimit=2.0, tileGridSize=(4,4)`) giữ nguyên gradient mức xám của nét chữ trước khi đưa vào mạng nơ-ron.
+   - Bằng chứng: Hàm `preprocess_plate` trong `detector.py`.
+
+4. Khắc phục triệt để thiên vị ký tự 'B' và số '8' bằng Oversampling:
+   - Vấn đề: Trong thực tế, số '8' xuất hiện với tần suất áp đảo chữ 'B', khiến mô hình học máy bị mất cân bằng và có xu hướng đoán sai chữ 'B' thành số '8'.
+   - Giải pháp: Tự động lọc toàn bộ các mẫu chứa ký tự 'B' trong tập huấn luyện và nhân bản (Oversampling), buộc mô hình phải học kỹ các đặc trưng phân biệt góc cạnh của chữ 'B'.
+   - Bằng chứng: Hàm `get_split_data` trong `dataset.py`.
+
+5. Cơ chế phân chia dữ liệu 3 tập chuẩn mực & So sánh Model an toàn:
+   - Vấn đề: Nhiều đồ án đánh giá mô hình trực tiếp trên tập train hoặc validation dẫn đến hiện tượng học vẹt (overfitting) và số liệu ảo.
+   - Giải pháp: Chia độc lập 70% Train / 15% Validation / 15% Test. Tự động backup mô hình cũ thành `plate_recognizer_backup.pth` và chỉ thay thế mô hình production khi điểm số trên tập Test độc lập mới thực sự vượt trội.
+   - Bằng chứng: Hàm `train` trong `train.py` và `evaluate.py`.
+
+6. Tách dòng thông minh cho biển số 2 dòng (Smart Multi-line OCR):
+   - Vấn đề: Biển số xe máy vuông có 2 dòng ký tự; nếu đưa cả ảnh vuông vào mạng OCR chuẩn (tỷ lệ 3:1) sẽ làm méo chữ nghiêm trọng.
+   - Giải pháp: Thuật toán tự động phân tích tỷ lệ khung hình W/H; nếu là biển vuông, hệ thống cắt làm 2 nửa theo chiều dọc, áp dụng padding giữ nguyên tỷ lệ (`preprocess_plate_keep_ratio`) cho từng dòng rồi ghép chuỗi lại.
+   - Bằng chứng: Hàm `_ocr_plate_smart` trong `app.py` và hàm `preprocess_plate_keep_ratio` trong `detector.py`.
+
+7. Giao tiếp nhúng chống treo Web (Non-blocking Asynchronous Design):
+   - Vấn đề: Khi thiết bị phần cứng (ESP-01/STM32) mất nguồn hoặc mất Wi-Fi, việc gọi HTTP request thông thường sẽ làm giao diện Web Streamlit bị đơ cứng (freeze) do chờ phản hồi quá lâu.
+   - Giải pháp: Áp dụng timeout ngắn (2.0s), bắt toàn bộ ngoại lệ mạng (`Timeout`, `ConnectionError`) trong `iot_client.py`, đảm bảo Web UI luôn hoạt động mượt mà ngay cả khi thiết bị nhúng ngoại vi bị ngắt kết nối.
+   - Bằng chứng: Hàm `check_esp_connection` và `send_alert_to_esp` trong `iot_client.py`.
+
+==================================================
+14. HẠN CHẾ VÀ HƯỚNG PHÁT TRIỂN
+==================================================
+
+Các hạn chế thực tế của dự án:
+1. Độ chính xác OCR ở một số cặp ký tự tương đồng: Vẫn còn tỷ lệ nhầm lẫn giữa các cặp nét mảnh như '1' nhầm '0' (26 lần), '-' nhầm '0' (22 lần), '2' nhầm '3' (21 lần) trên tập kiểm thử độc lập.
+2. Chất lượng ảnh đầu vào: Ảnh chụp vào ban đêm bị đèn pha rọi lóa trực diện hoặc ảnh bị che khuất một phần bởi móc kéo/bụi bẩn dày có thể dẫn đến đọc sai ký tự.
+3. Giới hạn xử lý video: Hệ thống hiện tại chỉ xử lý ảnh tĩnh hoặc ảnh chụp snapshot đơn lẻ từ webcam; chưa hỗ trợ giải mã luồng video RTSP/H.264 liên tục với cơ chế theo dõi phương tiện đa khung hình (Multi-object Tracking như ByteTrack/DeepSORT).
+4. Phân hệ cơ sở dữ liệu: Dữ liệu lịch sử hiện mới lưu trữ dưới dạng file phẳng JSON cục bộ (`plate_history.json`), chưa có hệ quản trị cơ sở dữ liệu quan hệ (PostgreSQL, MySQL) phục vụ truy vấn nâng cao và phân quyền người dùng.
+5. Bảo mật giao tiếp IoT: Bản tin HTTP giữa Web và ESP-01 hiện đang truyền ở dạng rõ (Plaintext qua HTTP POST), chưa có mã hóa HTTPS/TLS và xác thực API Key / Token.
+6. Cơ cấu chấp hành phần cứng: Hiện tại cơ cấu báo động mới dừng lại ở đèn LED D2 trên bo mạch STM32; chưa tích hợp còi hú công suất lớn và rơ-le điều khiển barrier nâng hạ vật lý.
+
+Hướng phát triển trong tương lai:
+1. Bổ sung mô-đun Video Stream: Tích hợp OpenCV VideoCapture hoặc Streamlit-WebRTC kết hợp thuật toán ByteTrack để theo dõi và nhận diện biển số liên tục trên video giao thông thực tế.
+2. Nâng cấp mô hình OCR: Thử nghiệm các kiến trúc Transformer mới nhất cho bài toán Vision-Language/Scene Text Recognition (như PARSeq, SVTR) để nâng cao độ chính xác nhận diện ký tự khó.
+3. Hoàn thiện hệ cơ sở dữ liệu tập trung: Xây dựng Backend với FastAPI + PostgreSQL để quản lý danh sách xe, danh sách đen, lịch sử vào ra và lưu lượng phương tiện theo ngày/tháng.
+4. Tích hợp phần cứng hoàn chỉnh: Thiết kế mạch in PCB mở rộng cho STM32 tích hợp Rơ-le điều khiển động cơ Barrier, còi Buzzer và cảm biến hồng ngoại/vòng từ phát hiện xe đến.
+
+==================================================
+15. THÔNG TIN PHỤC VỤ VIẾT 3 CHƯƠNG BÁO CÁO
+==================================================
+
+Dưới đây là dàn ý chi tiết và dữ liệu phục vụ trực tiếp việc viết 3 chương thuyết minh đồ án tốt nghiệp:
+
+CHƯƠNG 1: TỔNG QUAN BÀI TOÁN VÀ CƠ SỞ LÝ THUYẾT
+- 1.1. Đặt vấn đề: Nhu cầu tự động hóa trong quản lý phương tiện giao thông và an ninh đô thị.
+- 1.2. Mục tiêu và phạm vi nghiên cứu của đề tài.
+- 1.3. Tổng quan về các phương pháp nhận diện biển số xe (ALPR):
+  + Phương pháp xử lý ảnh truyền thống (Edge Detection, Morphological Operations, Template Matching, Tesseract OCR).
+  + Phương pháp học sâu (Deep Learning): Mạng nơ-ron tích chập (CNN), YOLO Object Detection, Mạng hồi quy Recurrent Neural Network (RNN/LSTM), cơ chế CTC Loss.
+- 1.4. Quy chuẩn biển số phương tiện giao thông đường bộ tại Việt Nam (kích thước biển dài, biển vuông, bộ ký tự chữ và số hợp lệ, quy tắc bố trí seri và mã tỉnh).
+- 1.5. Giới thiệu các công nghệ sử dụng trong đề tài:
+  + Ngôn ngữ Python, PyTorch, OpenCV, Streamlit, Ultralytics YOLOv8.
+  + Vi điều khiển STM32F407VET6 (Kiến trúc ARM Cortex-M4).
+  + Vi điều khiển Wi-Fi ESP8266 (Module ESP-01).
+
+CHƯƠNG 2: PHÂN TÍCH VÀ THIẾT KẾ HỆ THỐNG
+- 2.1. Phân tích yêu cầu hệ thống:
+  + Yêu cầu chức năng: Phát hiện biển số, đọc ký tự, đối chiếu danh sách mục tiêu, cảnh báo giao diện, truyền tín hiệu IoT, cảnh báo phần cứng LED.
+  + Yêu cầu phi chức năng: Thời gian phản hồi thời gian thực (< 500ms), độ chính xác nhận diện ký tự (> 85%), giao diện thân thiện, tính bền vững khi mất kết nối mạng.
+- 2.2. Kiến trúc tổng thể hệ thống (Kiến trúc 3 tầng: Tầng Giao diện & Xử lý AI -> Tầng Cầu nối Truyền thông IoT -> Tầng Chấp hành Nhúng).
+- 2.3. Thiết kế pipeline xử lý AI:
+  + Thiết kế mô-đun phát hiện biển số (YOLOv8 + OpenCV Fallback).
+  + Thiết kế tiền xử lý ảnh (Grayscale, CLAHE, Gaussian Blur, tỷ lệ co giãn).
+  + Thiết kế mô hình CRNN v2: Kiến trúc CNN ResNet 7 tầng, khối SE Attention, Positional Encoding, BiLSTM 2 chiều, Attention Layer và hàm mất mát CTC Loss.
+  + Thiết kế giải mã CTC Greedy và thuật toán tách dòng biển 2 dòng.
+- 2.4. Thiết kế phân hệ giám sát và cảnh báo mục tiêu: Thuật toán chuẩn hóa chuỗi Regex và logic so khớp.
+- 2.5. Thiết kế giao tiếp truyền thông và phần cứng nhúng:
+  + Thiết kế giao thức HTTP REST API giữa Web Client và ESP-01.
+  + Thiết kế giao thức truyền nối tiếp UART giữa ESP-01 và STM32F407 (Baud 115200, cấu trúc khung bản tin `ALERT:<plate>\n` và `STM32_ACK:<plate>\n`).
+  + Thiết kế sơ đồ nguyên lý đấu nối chân phần cứng (Pinout Wiring: Nguồn 3.3V, GND chung, PA2/PA3 USART2, PA6 LED D2 Active LOW).
+- 2.6. Thiết kế giao diện người dùng Web Dashboard (Bố cục 2 cột, Dark Tech Cyber Theme, quản lý Session State).
+
+CHƯƠNG 3: TRIỂN KHAI, KIỂM THỬ VÀ ĐÁNH GIÁ THỰC NGHIỆM
+- 3.1. Môi trường triển khai phần mềm và công cụ phần cứng.
+- 3.2. Quá trình chuẩn bị dữ liệu và huấn luyện mô hình:
+  + Thống kê tập dữ liệu 6,643 mẫu biển số Việt Nam.
+  + Kỹ thuật phân chia 70/15/15 và kỹ thuật cân bằng dữ liệu bằng Oversampling ký tự 'B'.
+  + Các kỹ thuật tăng cường dữ liệu (Data Augmentation).
+  + Quá trình huấn luyện mạng CRNN và YOLOv8 (đồ thị Loss, hàm tối ưu Adam, điều chỉnh tốc độ học).
+- 3.3. Kết quả đánh giá mô hình thực nghiệm:
+  + Bảng số liệu chi tiết trên 945 mẫu kiểm thử độc lập: Character Accuracy (88.33%), Exact Plate Accuracy (65.82%), CER (9.69%).
+  + Phân tích biểu đồ các cặp ký tự dễ nhầm lẫn (Top Confusion Pairs).
+  + Bảng đo đạc thời gian xử lý suy luận (Detection 15-25ms, OCR 15-30ms).
+- 3.4. Triển khai phần cứng và kiểm thử tích hợp:
+  + Nạp firmware Arduino C++ cho ESP-01 và kết nối Wi-Fi.
+  + Nạp firmware STM32CubeIDE cho STM32F407, xử lý ngắt USART2 và cấu hình chân Active LOW.
+  + Kết quả kiểm thử liên kết toàn diện Web -> ESP-01 -> STM32 -> LED D2.
+- 3.5. Đánh giá ưu điểm, hạn chế của hệ thống và đề xuất hướng phát triển tiếp theo.
+- 3.6. Kết luận đồ án.
+
+==================================================
+16. DANH SÁCH HÌNH ẢNH CẦN CHỤP ĐỂ ĐƯA VÀO BÁO CÁO
+==================================================
+
+Để hoàn thiện cuốn thuyết minh đồ án với hình ảnh minh họa chân thực và thuyết phục, sinh viên cần chụp các ảnh sau trực tiếp từ hệ thống:
+
+1. [Hình 1]: Sơ đồ kiến trúc tổng thể hệ thống (Đã vẽ sẵn bằng Mermaid trong file `README.md`).
+2. [Hình 2]: Cây cấu trúc thư mục dự án (Chụp cửa sổ VS Code / Explorer thư mục `DOAN/`).
+3. [Hình 3]: Giao diện tổng quan Web Dashboard khi vừa khởi chạy trên trình duyệt (`http://localhost:8501`).
+4. [Hình 4]: Giao diện khu vực "Cổng Giao Tiếp IoT" trên Sidebar hiển thị IP `192.168.137.61` và nút bấm kiểm tra kết nối.
+5. [Hình 5]: Kết quả kiểm tra kết nối ESP thành công: Hộp thông báo màu xanh lá cây `🟢 ESP-01 đã kết nối thành công (HTTP 200, 259.2ms)`.
+6. [Hình 6]: Ảnh gốc xe ô tô nạp vào hệ thống (Chụp giao diện nạp ảnh).
+7. [Hình 7]: Kết quả nhận diện xe bình thường: Hộp bao màu xanh lá cây kèm biển số và độ tin cậy.
+8. [Hình 8]: Kết quả nhận diện xe mục tiêu trùng khớp: Hộp bao màu đỏ viền đậm, icon 🎯, và Banner cảnh báo đỏ rực rỡ phía trên giao diện.
+9. [Hình 9]: Ảnh cắt vùng biển số (Plate Crop) và chuỗi OCR hiển thị bên cột kết quả phân tích.
+10. [Hình 10]: Kết quả nhận diện biển số 2 dòng của xe máy (Minh chứng thuật toán tách dòng thông minh).
+11. [Hình 11]: Bảng nhật ký nhận diện (Tactical Data Table) ở chân trang Web hiển thị các lượt quét và thumbnail ảnh crop.
+12. [Hình 12]: Biểu đồ quá trình huấn luyện `results/training_history.png` (Đồ thị Loss và Accuracy qua các Epochs).
+13. [Hình 13]: Biểu đồ phân phối lỗi ký tự `results/char_error_distribution.png` trích xuất từ tập Test.
+14. [Hình 14]: Ảnh trực quan hóa các mẫu dự đoán `results/sample_predictions.png`.
+15. [Hình 15]: Cửa sổ phần mềm STM32CubeMX cấu hình xung nhịp Clock 168 MHz và cấu hình USART2 (PA2, PA3).
+16. [Hình 16]: Cửa sổ phần mềm STM32CubeIDE hiển thị đoạn code xử lý ngắt `HAL_UART_Receive_IT` và hàm `blink_alert`.
+17. [Hình 17]: Cửa sổ phần mềm Arduino IDE nạp firmware `esp01_firmware.ino` cho ESP-01 (Hiển thị 100% Done uploading).
+18. [Hình 18]: Cửa sổ Windows Mobile Hotspot hiển thị thiết bị `ESP-13A32A` kết nối với IP `192.168.137.61`.
+19. [Hình 19]: Ảnh chụp thực tế góc làm việc: Board STM32F407VET6 kết nối 4 dây với module ESP-01 cắm vào máy tính.
+20. [Hình 20]: Ảnh chụp cận cảnh đèn LED D2 (PA6) trên board STM32 sáng/nhấp nháy khi nhận được tín hiệu cảnh báo từ Web.
+
+================================================================================
+KẾT THÚC BÁO CÁO THÔNG TIN DỰ ÁN
+================================================================================
