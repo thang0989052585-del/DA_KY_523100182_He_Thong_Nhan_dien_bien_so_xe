@@ -1,0 +1,69 @@
+======================================================================
+  BÁO CÁO ĐÁNH GIÁ MÔ HÌNH NHẬN DẠNG BIỂN SỐ XE (CRNN)
+======================================================================
+
+1. TỔNG QUAN CHỈ SỐ METRICS:
+----------------------------------------------------------------------
+  Metric                         | Validation Set  | Test Set (Độc lập)
+----------------------------------------------------------------------
+  Character Accuracy             |         95.22% |            88.33%
+  Exact Plate Accuracy           |         85.50% |            65.82%
+  Character Error Rate (CER)     |          3.70% |             9.69%
+  Tổng số mẫu                    |            945 |               945
+----------------------------------------------------------------------
+
+2. TOP CÁC CẶP KÝ TỰ BỊ NHẦM LẪN NHIỀU NHẤT (GT -> Pred):
+----------------------------------------------------------------------
+  '1' nhầm thành '0': 26 lần
+  '-' nhầm thành '0': 22 lần
+  '2' nhầm thành '3': 21 lần
+  '0' nhầm thành '1': 18 lần
+  '1' nhầm thành '7': 17 lần
+  '6' nhầm thành '5': 15 lần
+  '9' nhầm thành '0': 15 lần
+  '8' nhầm thành '6': 15 lần
+  '7' nhầm thành '3': 15 lần
+  '3' nhầm thành '2': 14 lần
+  '6' nhầm thành '8': 14 lần
+  '5' nhầm thành '6': 14 lần
+  '3' nhầm thành '0': 14 lần
+  '9' nhầm thành '8': 13 lần
+  '5' nhầm thành '9': 13 lần
+  '0' nhầm thành '3': 12 lần
+  '5' nhầm thành '3': 12 lần
+  '3' nhầm thành '9': 12 lần
+  '2' nhầm thành '7': 12 lần
+  '0' nhầm thành '8': 12 lần
+
+3. MẪU DỰ ĐOÁN SAI TIÊU BIỂU (Tối đa 30 mẫu):
+----------------------------------------------------------------------
+  GT: 98LD-00762       ->  Pred: 99LD-00762      (Edit Dist: 1)
+  GT: 29E-01396        ->  Pred: 29E-31286       (Edit Dist: 3)
+  GT: 54S7-3211        ->  Pred: 54S1-3211       (Edit Dist: 1)
+  GT: 31B-5669         ->  Pred: 32B-5089        (Edit Dist: 3)
+  GT: 60CD-00013       ->  Pred: 60B-00417       (Edit Dist: 4)
+  GT: 60AA-45663       ->  Pred: 60AA-49663      (Edit Dist: 1)
+  GT: 29U-3763         ->  Pred: 29D-3763        (Edit Dist: 1)
+  GT: 51A-1654         ->  Pred: 51A-1534        (Edit Dist: 2)
+  GT: HB-2050          ->  Pred: TM-2750         (Edit Dist: 3)
+  GT: 30E-28131        ->  Pred: 30A-28131       (Edit Dist: 1)
+  GT: 30X-4243         ->  Pred: 30A-4243        (Edit Dist: 1)
+  GT: 39F3-3811        ->  Pred: 71A-15511       (Edit Dist: 7)
+  GT: 59M1-89404       ->  Pred: 59N1-89404      (Edit Dist: 1)
+  GT: 33-315FM         ->  Pred: 29-91568        (Edit Dist: 5)
+  GT: 50A-02071        ->  Pred: 50A-02078       (Edit Dist: 1)
+  GT: 85A-00204        ->  Pred: 86A-00204       (Edit Dist: 1)
+  GT: 49A-47372        ->  Pred: 50H-04244       (Edit Dist: 8)
+  GT: 99B-01580        ->  Pred: 9B-01580        (Edit Dist: 1)
+  GT: 59M1-76054       ->  Pred: 59N1-76054      (Edit Dist: 1)
+  GT: 61F-00835        ->  Pred: 67F-00839       (Edit Dist: 2)
+  GT: 51B-30748        ->  Pred: 30F-23759       (Edit Dist: 7)
+  GT: 63V4-6033        ->  Pred: 63K4-6033       (Edit Dist: 1)
+  GT: 60F1-13324       ->  Pred: 60F4-13332      (Edit Dist: 3)
+  GT: 47AX-00075       ->  Pred: 47A1-00075      (Edit Dist: 1)
+  GT: 59C3-09742       ->  Pred: 59G3-09742      (Edit Dist: 1)
+  GT: 33LD-0027        ->  Pred: 3LD-0027        (Edit Dist: 1)
+  GT: 67M1-82809       ->  Pred: 67N1-87809      (Edit Dist: 2)
+  GT: 29A-01928        ->  Pred: 29A-01547       (Edit Dist: 3)
+  GT: 29G2-19075       ->  Pred: 29C2-19075      (Edit Dist: 1)
+  GT: 29B-12448        ->  Pred: 29B-13448       (Edit Dist: 1)
