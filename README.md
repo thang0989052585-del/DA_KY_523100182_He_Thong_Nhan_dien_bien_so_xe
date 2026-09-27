@@ -18,27 +18,70 @@ Hệ thống được thiết kế theo kiến trúc **End-to-End** gồm 2 mô-
 
 ---
 
-## 🧠 2. Kiến Trúc Hệ Thống (System Architecture)
+## ðŸ—ï¸ 2. Kiáº¿n TrÃºc Há»‡ Thá»‘ng (System Architecture)
+
+### ðŸ¤– Pipeline AI Nháº­n Diá»‡n Biá»ƒn Sá»‘
 
 ```mermaid
 graph TD
-    A[Ảnh đầu vào: Upload / Camera / URL] --> B[Mô-đun 1: YOLOv8 Plate Detector]
-    B --> C[Cắt vùng biển số Crop]
-    C --> D[Tiền xử lý: Grayscale + CLAHE + Resize 192x64]
-    D --> E[Mô-đun 2: CRNN Feature Extractor CNN]
-    E --> F[Chuỗi đặc trưng tuần tự: BiLSTM]
-    F --> G[Giải mã CTC Greedy Decoder]
-    G --> H[Kiểm tra tính hợp lệ Format Biển Số VN]
-    H --> I[Giao diện Web Streamlit Dashboard]
+    A[Äáº§u vÃ o: Upload / Camera / URL] --> B[MÃ´-Ä‘un 1: YOLOv8 Plate Detector]
+    B --> C[Cáº¯t vÃ¹ng biá»ƒn sá»‘ Crop]
+    C --> D[Tiá»n xá»­ lÃ½: Grayscale + CLAHE + Resize 192x64]
+    D --> E[MÃ´-Ä‘un 2: CRNN Feature Extractor CNN]
+    E --> F[Chuá»—i Ä‘áº·c trÆ°ng tuáº§n tá»±: BiLSTM]
+    F --> G[Giáº£i mÃ£ CTC Greedy Decoder]
+    G --> H[Kiá»ƒm tra tÃ­nh há»£p lá»‡ Format Biá»ƒn Sá»‘ VN]
+    H --> I[Giao diá»‡n Web Streamlit Dashboard]
+    I --> J{Khá»›p biá»ƒn sá»‘\nmá»¥c tiÃªu?}
+    J -- CÃ³ --> K[KÃ­ch hoáº¡t cáº£nh bÃ¡o IoT]
+    J -- KhÃ´ng --> L[Hiá»ƒn thá»‹ thÃ´ng tin xe bÃ¬nh thÆ°á»ng]
+    K --> M[iot_client.py: HTTP POST tá»›i ESP-01]
+    M --> N[ESP-01 Wi-Fi Bridge: UART tá»›i STM32]
+    N --> O[STM32F407VET6: Nháº¥p nhÃ¡y LED D2 / ChuÃ´ng cáº£nh bÃ¡o]
 ```
 
-### Chi tiết các tầng trong mạng CRNN:
-- **CNN (Feature Extraction):** Gồm 7 tầng tích chập Conv2D + BatchNorm + ReLU + MaxPool trích xuất các đặc trưng hình thái chữ số.
-- **Map-to-Sequence:** Chuyển đổi feature maps thành chuỗi vector đặc trưng theo trục thời gian/chiều ngang biển số.
-- **Bi-LSTM (Sequence Modeling):** 2 tầng Bidirectional LSTM (hidden size 256) học ngữ cảnh 2 chiều trái-phải, phân biệt các nét chữ dễ dính nhau (như `B` vs `8`, `0` vs `D`).
-- **CTC Projection & Decode:** Tầng Tuyến tính Linear chuyển đổi sang xác suất của từng ký tự trong bảng Alphabet, giải mã CTC Greedy lược bỏ ký tự blank `_` và các ký tự trùng lặp.
+### ðŸ“¶ Luá»“ng TÃ­ch Há»£p IoT Äáº§y Äá»§ (End-to-End)
 
----
+```mermaid
+sequenceDiagram
+    autonumber
+    actor User as PhÆ°Æ¡ng tiá»‡n vÃ o tráº¡m
+    participant Cam as Camera / Web UI
+    participant AI as AI YOLOv8 + CRNN
+    participant IoT as iot_client.py
+    participant ESP as ESP-01 Wi-Fi Bridge
+    participant STM as STM32F407VET6
+    participant LED as LED D2 PA6
+
+    User->>Cam: PhÆ°Æ¡ng tiá»‡n di chuyá»ƒn vÃ o tráº¡m
+    Cam->>AI: Chá»¥p vÃ  truyá»n áº£nh vá» Web
+    AI->>AI: YOLOv8 phÃ¡t hiá»‡n + cáº¯t vÃ¹ng biá»ƒn sá»‘
+    AI->>AI: CRNN nháº­n dáº¡ng chuá»—i kÃ½ tá»±
+    AI->>AI: Äá»‘i chiáº¿u vá»›i danh sÃ¡ch biá»ƒn sá»‘ má»¥c tiÃªu
+    alt Khá»›p biá»ƒn sá»‘ má»¥c tiÃªu
+        AI->>IoT: Gá»i send_alert(plate_text)
+        IoT->>ESP: HTTP POST /alert vá»›i data plate=29AB-12345
+        ESP->>ESP: Parse HTTP request
+        ESP->>STM: Gá»­i chuá»—i UART ALERT:29AB-12345 á»Ÿ 115200 bps
+        STM->>STM: Ngáº¯t USART2 báº¯t chuá»—i kÃ½ tá»±
+        STM->>LED: KÃ­ch hoáº¡t nháº¥p nhÃ¡y LED D2 PA6 x5 láº§n
+        STM-->>ESP: Pháº£n há»“i STM32_ACK:29AB-12345
+        ESP-->>IoT: HTTP 200 OK
+        IoT-->>AI: XÃ¡c nháº­n Ä‘Ã£ kÃ­ch hoáº¡t cáº£nh bÃ¡o
+        AI->>Cam: Hiá»ƒn thá»‹ cáº£nh bÃ¡o mÃ u Ä‘á» trÃªn Dashboard
+    else Biá»ƒn sá»‘ bÃ¬nh thÆ°á»ng
+        AI->>Cam: Hiá»ƒn thá»‹ thÃ´ng tin xe, khÃ´ng báº­t cáº£nh bÃ¡o
+    end
+```
+
+### ðŸ”§ Chi Tiáº¿t CÃ¡c Táº§ng Trong Máº¡ng CRNN
+
+| Táº§ng | ThÃ nh pháº§n | MÃ´ táº£ |
+| :--- | :--- | :--- |
+| **CNN** | 7 táº§ng Conv2D + BatchNorm + ReLU + MaxPool | TrÃ­ch xuáº¥t Ä‘áº·c trÆ°ng hÃ¬nh áº£nh biá»ƒn sá»‘ |
+| **Map-to-Seq** | Reshape feature maps thÃ nh chuá»—i vector | Chuyá»ƒn Ä‘á»•i sang dáº¡ng chuá»—i thá»i gian |
+| **BiLSTM** | 2 táº§ng Bidirectional LSTM hidden=256 | Há»c ngá»¯ cáº£nh 2 chiá»u trÃ¡i-pháº£i |
+| **CTC Decode** | Linear + CTC Greedy | Giáº£i mÃ£ kÃ½ tá»±, loáº¡i blank vÃ  kÃ½ tá»± trÃ¹ng |
 
 ## 🌟 3. Các Điểm Nổi Bật & Cải Tiến Kỹ Thuật
 
