@@ -25,7 +25,7 @@ Mục đích        : Cung cấp số liệu, kiến trúc, hiện trạng và p
   2. Xây dựng mô-đun nhận dạng ký tự quang học (OCR) ứng dụng kiến trúc mạng CRNN (CNN ResNet-style + Squeeze-Excitation + BiLSTM + Attention + CTC Loss) giải mã chuỗi ký tự không cần phân đoạn rời rạc.
   3. Xây dựng giao diện Web Dashboard bằng Streamlit phục vụ trực quan hóa: tải ảnh, chụp camera snapshot, khoanh vùng bounding box, hiển thị kết quả OCR, độ tin cậy, lưu trữ nhật ký lịch sử nhận diện.
   4. Xây dựng phân hệ giám sát mục tiêu (Target Plate Tracking): chuẩn hóa chuỗi ký tự, so khớp và kích hoạt cảnh báo trực quan trên Web khi phát hiện phương tiện trong danh sách cần theo dõi.
-  5. Xây dựng phân hệ giao tiếp IoT và thiết bị nhúng: Web gửi bản tin HTTP POST tới module Wi-Fi ESP-01 (ESP8266); ESP-01 phân tích và chuyển tiếp lệnh qua chuẩn giao tiếp nối tiếp UART (115200 bps) tới vi điều khiển STM32F407VET6 để điều khiển đèn LED D2 (PA6) nhấp nháy báo động.
+  5. Xây dựng phân hệ giao tiếp IoT và thiết bị nhúng: Web gửi bản tin HTTP POST tới module Wi-Fi ESP-01 (ESP8266); ESP-01 phân tích và chuyển tiếp lệnh qua chuẩn giao tiếp nối tiếp UART (115200 bps) tới vi điều khiển STM32F407VET6 để điều khiển đèn LED D2 (PA6) sáng liên tục 10 giây (10s) báo động.
 
 - Lý do lựa chọn đề tài:
   Bài toán nhận diện biển số xe (ALPR/ANPR) là công nghệ cốt lõi trong Hệ thống Giao thông Thông minh (ITS), bãi giữ xe tự động, trạm thu phí không dừng (ETC) và an ninh trật tự đô thị. Việc kết hợp xử lý AI trên máy chủ/máy tính trạm với thiết bị nhúng điều khiển tại hiện trường tạo thành một hệ sinh thái khép kín thực tế, đáp ứng cả tiêu chí học thuật AI chuyên sâu và kỹ năng tích hợp phần cứng nhúng.
@@ -83,7 +83,7 @@ Bảng trạng thái kiểm thử và tính khả dụng của các chức năng
 | **Gửi HTTP POST /alert sang ESP-01** | Đã hoàn thành | ✅ Đã gửi thử nghiệm thành công: payload `plate=...`. |
 | **ESP-01 truyền UART sang STM32** | Đã hoàn thành | ✅ Baud 115200 bps, chuỗi `ALERT:<plate>\n`. |
 | **STM32 nhận lệnh qua ngắt UART** | Đã hoàn thành | ✅ Viết trong STM32CubeIDE với `HAL_UART_Receive_IT`. |
-| **LED D2 (PA6) nhấp nháy theo cảnh báo** | Đang hoàn thiện | ⚠️ Đã sửa logic Active LOW (SET = Tắt, RESET = Sáng). |
+| **LED D2 (PA6) sáng 10s theo cảnh báo** | Đang hoàn thiện | ⚠️ Đã sửa logic Active LOW (SET = Tắt, RESET = Sáng). |
 | **Xử lý Video Stream liên tục (RTSP)** | Chưa triển khai | ❌ Chưa có trong mã nguồn (chỉ có ảnh tĩnh/snapshot). |
 | **Cơ sở dữ liệu người dùng & Barrier** | Chưa triển khai | ❌ Chưa có cơ cấu cơ khí và cơ sở dữ liệu SQL. |
 
@@ -206,9 +206,9 @@ Chi tiết vai trò từng file:
     - Sử dụng thực tế: Đã nạp thành công vào ESP-01 và kết nối Wi-Fi Hotspot.
 
 11. Mã nguồn STM32 (`main.c` trong STM32CubeIDE):
-    - Vai trò: Firmware nhúng chạy trên chip STM32F407VET6, nhận ngắt UART USART2, kiểm tra cú pháp lệnh `ALERT:`, điều khiển LED D2 (PA6) nhấp nháy báo động.
+    - Vai trò: Firmware nhúng chạy trên chip STM32F407VET6, nhận ngắt UART USART2, kiểm tra cú pháp lệnh `ALERT:`, điều khiển LED D2 (PA6) sáng liên tục 10 giây (10s) báo động.
     - Input: Tín hiệu UART nhận tại chân PA3 (USART2_RX).
-    - Output: Xung logic điều khiển chân GPIO PA6 kích mức Thấp (Active LOW) nhấp nháy 5 lần.
+    - Output: Xung logic điều khiển chân GPIO PA6 kích mức Thấp (Active LOW) bật sáng liên tục 10 giây (10.000 ms), sau đó trở về mức Cao (Tắt).
     - Công nghệ: C, STM32 HAL Driver, STM32CubeIDE.
     - Sử dụng thực tế: Đã nạp vào vi điều khiển STM32F407.
 
@@ -461,7 +461,7 @@ Sơ đồ khối luồng tín hiệu phần cứng:
        │
        ▼
 [🚨 ĐÈN BÁO ĐỘNG LED D2 (PA6)]
-  └── Chớp nháy 5 lần liên tục (chu kỳ 150ms) để cảnh báo tại hiện trường.
+  └── Bật sáng liên tục 10 giây (10.000 ms) qua hàm LED_On_Alert(10000) để cảnh báo rõ ràng tại hiện trường.
 ```
 
 Chi tiết thông số thiết bị phần cứng:
@@ -508,12 +508,12 @@ Chi tiết thông số thiết bị phần cứng:
   ```
   Bộ đệm nhận dữ liệu vòng `rx_buf[64]`. Trong hàm callback `HAL_UART_RxCpltCallback`, ký tự được tích lũy cho đến khi bắt gặp ký tự kết thúc dòng `\n` hoặc `\r` (hỗ trợ cả các chuẩn truyền từ PuTTY và ESP-01).
 - Xử lý lệnh:
-  Khi cờ `line_ready` được bật, chương trình chính kiểm tra tiền tố `strncmp(rx_buf, "ALERT:", 6) == 0`. Nếu đúng, gọi hàm `blink_alert()` và phản hồi chuỗi `STM32_ACK:<plate>\r\n`.
-- Chu trình nhấp nháy LED:
-  Hàm `blink_alert()` thực hiện nhấp nháy 5 chu kỳ:
-  + Bật sáng (`GPIO_PIN_RESET` do mạch Active LOW) trong 150 ms.
-  + Tắt đèn (`GPIO_PIN_SET`) trong 150 ms.
-  + Kết thúc chu kỳ luôn chốt chân PA6 ở mức `GPIO_PIN_SET` để đèn tắt hoàn toàn.
+  Khi cờ `line_ready` được bật, chương trình chính kiểm tra tiền tố `strncmp(rx_buf, "ALERT:", 6) == 0`. Nếu đúng, gọi hàm `LED_On_Alert(LED_ON_DURATION)` (10 giây) và phản hồi chuỗi `STM32_ACK:<plate>\r\n`.
+- Chu trình điều khiển LED cảnh báo:
+  Hàm `LED_On_Alert(uint32_t duration_ms)` thực hiện bật sáng LED D2 liên tục trong 10 giây (duration_ms = 10000):
+  + Bật sáng (`GPIO_PIN_RESET` do mạch Active LOW): `HAL_GPIO_WritePin(GPIOA, GPIO_PIN_6, GPIO_PIN_RESET);`
+  + Duy trì trạng thái sáng trong đúng 10 giây: `HAL_Delay(duration_ms);`
+  + Kết thúc 10 giây, chốt chân PA6 ở mức `GPIO_PIN_SET` (`HAL_GPIO_WritePin(GPIOA, GPIO_PIN_6, GPIO_PIN_SET);`) để đèn tắt hoàn toàn.
 - Còi báo (Buzzer) & Rơ-le (Relay): Chưa lắp đặt trên phần cứng thực tế (chỉ sử dụng LED D2 làm cơ cấu hiển thị).
 
 ==================================================
@@ -565,7 +565,7 @@ Bảng tổng hợp các ca kiểm thử hệ thống:
 | **TC11** | ESP-01 nhận HTTP POST `/alert` | Web gửi payload `plate=29C68888` | ESP-01 nhận và phản hồi `OK: 29C68888` | Phản hồi HTTP 200 OK | **ĐẠT** |
 | **TC12** | ESP-01 đẩy UART sang STM32 | Nhận POST -> Gửi Serial | Chân TXD ESP-01 xuất chuỗi `ALERT:29C68888\n` | Tín hiệu xung logic xuất ra chân TXD | **ĐẠT** |
 | **TC13** | STM32 bắt ngắt UART USART2 | Nhận chuỗi qua chân PA3 | Hàm ngắt lưu vào bộ đệm và bật cờ `line_ready` | Nhận trọn vẹn chuỗi ký tự | **ĐẠT** |
-| **TC14** | Điều khiển LED D2 (PA6) chớp nháy | Nhận lệnh `ALERT:` | Đèn LED D2 chớp nháy 5 lần rồi tắt hẳn | Đã sửa trạng thái Active LOW | **ĐẠT** |
+| **TC14** | Điều khiển LED D2 (PA6) sáng 10s | Nhận lệnh `ALERT:` | Đèn LED D2 bật sáng giữ liên tục 10 giây rồi tắt hẳn | Đã sửa trạng thái Active LOW | **ĐẠT** |
 | **TC15** | Đánh giá CER và Accuracy tập Test | Chạy `python evaluate.py` | Xuất file báo cáo số liệu trên 945 mẫu | Xuất báo cáo `evaluation_report.txt` | **ĐẠT** |
 | **TC16** | Xử lý video RTSP liên tục | Luồng RTSP từ Camera IP | Tự động bóc tách từng frame theo thời gian thực | Chưa hỗ trợ trong source code hiện tại | **CHƯA TEST** |
 | **TC17** | Cơ chế tự động mở Barrier cơ khí | Nhận tín hiệu điều khiển relay | Đóng ngắt rơ-le nâng hạ thanh chắn barrier | Chưa có phần cứng cơ khí | **CHƯA TEST** |
@@ -702,11 +702,11 @@ CHƯƠNG 3: TRIỂN KHAI, KIỂM THỬ VÀ ĐÁNH GIÁ THỰC NGHIỆM
 13. [Hình 13]: Biểu đồ phân phối lỗi ký tự `results/char_error_distribution.png` trích xuất từ tập Test.
 14. [Hình 14]: Ảnh trực quan hóa các mẫu dự đoán `results/sample_predictions.png`.
 15. [Hình 15]: Cửa sổ phần mềm STM32CubeMX cấu hình xung nhịp Clock 168 MHz và cấu hình USART2 (PA2, PA3).
-16. [Hình 16]: Cửa sổ phần mềm STM32CubeIDE hiển thị đoạn code xử lý ngắt `HAL_UART_Receive_IT` và hàm `blink_alert`.
+16. [Hình 16]: Cửa sổ phần mềm STM32CubeIDE hiển thị đoạn code xử lý ngắt `HAL_UART_Receive_IT` và hàm `LED_On_Alert(10000)`.
 17. [Hình 17]: Cửa sổ phần mềm Arduino IDE nạp firmware `esp01_firmware.ino` cho ESP-01 (Hiển thị 100% Done uploading).
 18. [Hình 18]: Cửa sổ Windows Mobile Hotspot hiển thị thiết bị `ESP-13A32A` kết nối với IP `192.168.137.61`.
 19. [Hình 19]: Ảnh chụp thực tế góc làm việc: Board STM32F407VET6 kết nối 4 dây với module ESP-01 cắm vào máy tính.
-20. [Hình 20]: Ảnh chụp cận cảnh đèn LED D2 (PA6) trên board STM32 sáng/nhấp nháy khi nhận được tín hiệu cảnh báo từ Web.
+20. [Hình 20]: Ảnh chụp cận cảnh đèn LED D2 (PA6) trên board STM32 bật sáng liên tục 10 giây khi nhận được tín hiệu cảnh báo từ Web.
 
 ================================================================================
 KẾT THÚC BÁO CÁO THÔNG TIN DỰ ÁN

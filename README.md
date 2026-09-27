@@ -37,7 +37,7 @@ graph TD
     J -- "Khong" --> L["Hien thi thong tin xe binh thuong"]
     K --> M["iot_client.py: HTTP POST den ESP-01"]
     M --> N["ESP-01 Wi-Fi Bridge: UART den STM32"]
-    N --> O["STM32F407VET6: LED D2 sang 10 giay"]
+    N --> O["STM32F407VET6: LED D2 sang 10s"]
 ```
 
 ### 🔄 Luồng Tích Hợp IoT Đầy Đủ (End-to-End Flow)
@@ -64,7 +64,7 @@ sequenceDiagram
         ESP->>ESP: Parse HTTP request
         ESP->>STM: Gui UART "ALERT:29AB-12345" 115200 bps
         STM->>STM: Ngat USART2 bat chuoi ky tu
-        STM->>LED: Kich hoat sang 10 giay LED D2 PA6 
+        STM->>LED: Kich hoat bat sang LED D2 PA6 trong 10s
         STM-->>ESP: Phan hoi "STM32_ACK:29AB-12345"
         ESP-->>IoT: HTTP 200 OK
         IoT-->>AI: Xac nhan da kich hoat canh bao
@@ -132,7 +132,12 @@ DOAN/
 │   ├── plate_recognizer_backup.pth  # Model OCR sao lưu dự phòng (Backup)
 │   └── yolo_plate_detector.pt       # Model YOLOv8 phát hiện biển số
 ├── esp01_firmware/              # Firmware Arduino/ESP8266 cho module Wi-Fi ESP-01
-│   └── esp01_server/                # Sketch Arduino: HTTP server + UART bridge → STM32
+│   └── esp01_firmware.ino           # Sketch Arduino: HTTP server + UART bridge → STM32
+├── stm32_firmware/              # Firmware C/STM32CubeIDE cho STM32F407VET6
+│   ├── main.c                       # Code chính: Ngắt USART2, điều khiển LED D2 sáng 10s
+│   ├── main.h                       # Header thư viện HAL STM32
+│   ├── canhbaonhandien.ioc          # Cấu hình chân & clock STM32CubeMX
+│   └── README.md                    # Hướng dẫn nạp và hoạt động phần cứng STM32
 ├── results/                     # Kết quả đánh giá và biểu đồ xuất ra
 │   ├── evaluation_report.txt        # Báo cáo đánh giá chi tiết
 │   ├── char_error_distribution.png  # Biểu đồ phân phối ký tự bị nhầm
@@ -195,7 +200,7 @@ Mở trình duyệt truy cập: **`http://localhost:8501`** (hoặc port đượ
 
 | Kịch Bản Ứng Dụng | Thiết Bị Cần Có | Trạng Thái | Mô Tả |
 | :--- | :--- | :---: | :--- |
-| **Kịch Bản 1: Test Trực Tiếp (Có dây Serial)** | 1. Laptop (Web AI)<br>2. Board STM32F407VET6<br>3. Mạch USB-UART (hoặc ST-Link VCP) | **✅ ĐÃ ĐỦ** | Cắm trực tiếp USB-UART từ máy tính vào chân PA2/PA3 của STM32. Khi AI phát hiện biển số mục tiêu, gửi lệnh `ALERT:<plate>` qua cổng COM. LED D2 (PA6) chớp ngay lập tức. |
+| **Kịch Bản 1: Test Trực Tiếp (Có dây Serial)** | 1. Laptop (Web AI)<br>2. Board STM32F407VET6<br>3. Mạch USB-UART (hoặc ST-Link VCP) | **✅ ĐÃ ĐỦ** | Cắm trực tiếp USB-UART từ máy tính vào chân PA2/PA3 của STM32. Khi AI phát hiện biển số mục tiêu, gửi lệnh `ALERT:<plate>` qua cổng COM. LED D2 (PA6) sáng giữ 10s ngay lập tức. |
 | **Kịch Bản 2: Hệ Thống IoT Chuẩn (Không dây Wi-Fi)** | 1. Laptop (Web AI)<br>2. Board STM32F407VET6<br>3. Module Wi-Fi ESP-01 (ESP8266) | **⏳ CẦN THÊM ESP-01** | Vì chip STM32F407 không tích hợp Wi-Fi, cần thêm ESP-01 làm cầu nối (Web gửi HTTP POST qua Wi-Fi -> ESP-01 nhận và đẩy UART sang STM32). |
 
 ---
@@ -213,7 +218,7 @@ flowchart LR
 
     subgraph Hardware["🎛️ Phần Cứng STM32"]
         Serial -->|Dây TX -> PA3| STM[STM32F407VET6<br/>Ngắt USART2 RX]
-        STM -->|Kích hoạt GPIO| LED[🚨 LED D2 - PA6<br/>sáng 10 giây / Còi Buzzer]
+        STM -->|Kích hoạt GPIO| LED[🚨 LED D2 - PA6<br/>Sáng liên tục 10s / Còi Buzzer]
         STM -.->|Gửi phản hồi ACK: PA2 -> RX| Serial
     end
 ```
@@ -238,7 +243,7 @@ sequenceDiagram
         ESP->>ESP: Parse dữ liệu HTTP
         ESP->>STM: Gửi chuỗi UART: "ALERT:30A12345\n" (115200 bps)
         STM->>STM: Ngắt USART2 bắt chuỗi ký tự
-        STM->>Actuator: Kích hoạt chớp đèn sáng 10 giây LED D2 (PA6)  
+        STM->>Actuator: Kích hoạt bật sáng LED D2 (PA6) trong 10 giây (10s) / Bật còi
         STM-->>ESP: Gửi phản hồi "STM32_ACK:30A12345\n"
         ESP-->>AI: Phản hồi HTTP 200 OK (Đã kích hoạt cảnh báo)
         AI->>Cam: Hiển thị cảnh báo đỏ trên Dashboard
@@ -290,8 +295,8 @@ ESP-01 (ESP8266)                  STM32F407VET6
 
 | Lệnh gửi (Từ PC/ESP-01 sang STM32) | Phản hồi từ STM32 | Hành động phần cứng |
 | :--- | :--- | :--- |
-| `ALERT:TEST\r\n` | `STM32_ACK:TEST\r\n` | LED D2 (PA6) sáng 10 giây |
-| `ALERT:30A12345\r\n` | `STM32_ACK:30A12345\r\n` | LED D2 (PA6) sáng 10 giây |
+| `ALERT:TEST\r\n` | `STM32_ACK:TEST\r\n` | LED D2 (PA6) sáng liên tục 10 giây (10s) |
+| `ALERT:30A12345\r\n` | `STM32_ACK:30A12345\r\n` | LED D2 (PA6) sáng liên tục 10 giây (10s), báo còi |
 | Khởi động nguồn STM32 | `STM32_READY\r\n` | Báo hiệu vi điều khiển đã sẵn sàng nhận lệnh |
 
 ---

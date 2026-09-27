@@ -2080,7 +2080,7 @@ def main():
                     iot_feedback_html += f"""
                     <div style="margin-top:8px;padding:6px 10px;background:rgba(0,255,136,0.12);border:1px solid #00FF88;border-radius:5px;font-size:0.75rem;color:#00FF88;display:flex;align-items:center;gap:6px;">
                         <span>📡</span>
-                        <span><b>[IoT ESP-01 → STM32]</b> Đã gửi HTTP POST /alert cho biển số <b>{p}</b>. STM32 điều khiển LED nhấp nháy cảnh báo.</span>
+                        <span><b>[IoT ESP-01 → STM32]</b> Đã gửi HTTP POST /alert cho biển số <b>{p}</b>. STM32 điều khiển LED sáng 10s cảnh báo.</span>
                     </div>
                     """
                 else:
