@@ -123,10 +123,16 @@ def save_history(history: list) -> None:
 def add_plate_to_history(record: dict) -> None:
     """
     Thêm một bản ghi mới vào đầu lịch sử trong session state, sau đó lưu file.
-    Giới hạn tối đa 500 bản ghi và 7 ngày.
+    Giới hạn tối đa 500 bản ghi và 7 ngày. Tự động loại bỏ bản ghi cũ trùng biển số.
     """
     cutoff = datetime.now() - timedelta(days=HISTORY_RETENTION_DAYS)
     history = st.session_state.get("plate_history", [])
+    
+    # Loại bỏ bản ghi cũ có cùng biển số để đưa bản quét mới nhất lên đầu (tránh trùng lặp)
+    new_plate = (record.get("plate_text") or "").strip()
+    if new_plate:
+        history = [h for h in history if (h.get("plate_text") or "").strip() != new_plate]
+    
     history.insert(0, record)
     # Lọc bỏ bản ghi quá cũ
     def still_valid(item):
@@ -1631,7 +1637,27 @@ def render_recent_history():
             pass
         st.rerun()
 
-    history = st.session_state.get("plate_history", [])
+    # Tự động loại bỏ các bản ghi trùng lặp trong session_state nếu có
+    raw_history = st.session_state.get("plate_history", [])
+    seen_plates = set()
+    deduped_history = []
+    has_dup = False
+    for item in raw_history:
+        pt = (item.get("plate_text") or "").strip()
+        if pt:
+            if pt not in seen_plates:
+                seen_plates.add(pt)
+                deduped_history.append(item)
+            else:
+                has_dup = True
+        else:
+            deduped_history.append(item)
+    if has_dup:
+        st.session_state["plate_history"] = deduped_history
+        save_history(deduped_history)
+        history = deduped_history
+    else:
+        history = raw_history
 
     # Header tabs & Action bar
     col_tabs, col_actions = st.columns([3, 2])
@@ -1676,7 +1702,24 @@ def render_recent_history():
 
         with btn_c3:
             with st.popover("⚙️", help="Quản lý lịch sử"):
-                st.markdown("<b style='color:#FF3B5C;'>⚠️ Thao tác nguy hiểm</b>", unsafe_allow_html=True)
+                st.markdown("<b style='color:#00D4FF;'>🧹 Dọn dẹp dữ liệu</b>", unsafe_allow_html=True)
+                if st.button("🧹 Xóa bản ghi trùng lặp", key="btn_manual_dedup_history", use_container_width=True):
+                    seen = set()
+                    clean_hist = []
+                    for it in st.session_state.get("plate_history", []):
+                        p_str = (it.get("plate_text") or "").strip()
+                        if p_str and p_str not in seen:
+                            seen.add(p_str)
+                            clean_hist.append(it)
+                        elif not p_str:
+                            clean_hist.append(it)
+                    rem = len(st.session_state.get("plate_history", [])) - len(clean_hist)
+                    st.session_state["plate_history"] = clean_hist
+                    save_history(clean_hist)
+                    st.toast(f"Đã dọn dẹp {rem} bản ghi trùng lặp!", icon="🧹")
+                    st.rerun()
+
+                st.markdown("<b style='color:#FF3B5C;margin-top:8px;display:block;'>⚠️ Thao tác nguy hiểm</b>", unsafe_allow_html=True)
                 confirm_chk = st.checkbox("Xác nhận muốn xóa toàn bộ lịch sử", key="chk_safe_delete_history")
                 if confirm_chk:
                     if st.button("🗑️ Xác nhận xóa sạch", type="primary", key="btn_confirm_delete_history", use_container_width=True):
