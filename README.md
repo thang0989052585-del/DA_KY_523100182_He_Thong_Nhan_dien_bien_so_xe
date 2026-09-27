@@ -64,7 +64,7 @@ sequenceDiagram
         ESP->>ESP: Parse HTTP request
         ESP->>STM: Gui UART "ALERT:29AB-12345" 115200 bps
         STM->>STM: Ngat USART2 bat chuoi ky tu
-        STM->>LED: Kich hoat nhap nhay LED D2 PA6 x5 lan
+        STM->>LED: Kich hoat sang 10 giay LED D2 PA6 
         STM-->>ESP: Phan hoi "STM32_ACK:29AB-12345"
         ESP-->>IoT: HTTP 200 OK
         IoT-->>AI: Xac nhan da kich hoat canh bao
