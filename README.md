@@ -213,7 +213,7 @@ flowchart LR
 
     subgraph Hardware["🎛️ Phần Cứng STM32"]
         Serial -->|Dây TX -> PA3| STM[STM32F407VET6<br/>Ngắt USART2 RX]
-        STM -->|Kích hoạt GPIO| LED[🚨 LED D2 - PA6<br/>Nhấp nháy 5 lần / Còi Buzzer]
+        STM -->|Kích hoạt GPIO| LED[🚨 LED D2 - PA6<br/>sáng 10 giây / Còi Buzzer]
         STM -.->|Gửi phản hồi ACK: PA2 -> RX| Serial
     end
 ```
@@ -238,7 +238,7 @@ sequenceDiagram
         ESP->>ESP: Parse dữ liệu HTTP
         ESP->>STM: Gửi chuỗi UART: "ALERT:30A12345\n" (115200 bps)
         STM->>STM: Ngắt USART2 bắt chuỗi ký tự
-        STM->>Actuator: Kích hoạt chớp nháy LED D2 (PA6) 5 lần / Bật còi
+        STM->>Actuator: Kích hoạt chớp đèn sáng 10 giây LED D2 (PA6)  
         STM-->>ESP: Gửi phản hồi "STM32_ACK:30A12345\n"
         ESP-->>AI: Phản hồi HTTP 200 OK (Đã kích hoạt cảnh báo)
         AI->>Cam: Hiển thị cảnh báo đỏ trên Dashboard
@@ -290,8 +290,8 @@ ESP-01 (ESP8266)                  STM32F407VET6
 
 | Lệnh gửi (Từ PC/ESP-01 sang STM32) | Phản hồi từ STM32 | Hành động phần cứng |
 | :--- | :--- | :--- |
-| `ALERT:TEST\r\n` | `STM32_ACK:TEST\r\n` | LED D2 (PA6) nhấp nháy 5 lần chu kỳ 150ms |
-| `ALERT:30A12345\r\n` | `STM32_ACK:30A12345\r\n` | LED D2 (PA6) nhấp nháy 5 lần, báo còi |
+| `ALERT:TEST\r\n` | `STM32_ACK:TEST\r\n` | LED D2 (PA6) sáng 10 giây |
+| `ALERT:30A12345\r\n` | `STM32_ACK:30A12345\r\n` | LED D2 (PA6) sáng 10 giây |
 | Khởi động nguồn STM32 | `STM32_READY\r\n` | Báo hiệu vi điều khiển đã sẵn sàng nhận lệnh |
 
 ---
