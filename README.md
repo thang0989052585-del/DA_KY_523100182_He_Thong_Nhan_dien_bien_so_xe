@@ -5,7 +5,7 @@
 
 ---
 
-> 🎬 **Video Demo:** [Xem demo hệ thống hoạt động thực tế trên Google Drive](https://drive.google.com/file/d/1X1n2R2iVez5y6WRnL59zJwGNxEA87hab/view?usp=sharing)
+>  **Link Google Drive tải sản phẩm đóng gói:** (https://drive.google.com/file/d/1X1n2R2iVez5y6WRnL59zJwGNxEA87hab/view?usp=sharing)
 
 
 ## 📌 1. Giới Thiệu & Mục Tiêu Đề Tài
