@@ -1,9 +1,12 @@
-# 🚗 Hệ Thống Nhận Diện Biển Số Xe Việt Nam (ALPR / ANPR)
+﻿# 🚗 Hệ Thống Nhận Diện Biển Số Xe Việt Nam (ALPR / ANPR)
 
 > **Đồ án môn học:** Nghiên cứu & Xây dựng Hệ thống Tự Động Nhận Diện Biển Số Xe (Automatic License Plate Recognition)  
 > **Công nghệ lõi:** `YOLOv8` ⚡ `CRNN (CNN + BiLSTM)` ⚡ `CTC Loss` ⚡ `PyTorch` ⚡ `OpenCV` ⚡ `Streamlit`
 
 ---
+
+> 🎬 **Video Demo:** [Xem demo hệ thống hoạt động thực tế trên Google Drive](https://drive.google.com/file/d/1X1n2R2iVez5y6WRnL59zJwGNxEA87hab/view?usp=sharing)
+
 
 ## 📌 1. Giới Thiệu & Mục Tiêu Đề Tài
 
@@ -63,31 +66,42 @@ graph TD
 
 ## 📁 5. Cấu Trúc Thư Mục Dự Án (Project Structure)
 
-```text
+`	ext
 DOAN/
-├── app.py                      # Ứng dụng Web Dashboard hoàn chỉnh bằng Streamlit
-├── config.py                   # Cấu hình trung tâm (Hyperparameters, Alphabet, Paths)
-├── dataset.py                  # Pipeline nạp dữ liệu, chia 70/15/15, Augmentation, Oversample
-├── detector.py                 # Thuật toán phát hiện biển số (YOLOv8 & OpenCV)
-├── model.py                    # Kiến trúc CRNN PyTorch (CNN + BiLSTM + CTC Decode)
-├── train.py                    # Huấn luyện OCR, Early Stopping, Backup & So sánh Test Set
-├── train_yolo.py               # Kịch bản huấn luyện YOLOv8 phát hiện biển số
-├── evaluate.py                 # Đánh giá độc lập, vẽ biểu đồ lỗi, xuất báo cáo chi tiết
-├── requirements.txt            # Danh sách thư viện phụ thuộc
-├── saved_models/               # Thư mục lưu trữ trọng số mô hình
-│   ├── plate_recognizer.pth        # Model OCR CRNN chính thức (Production)
-│   ├── plate_recognizer_backup.pth # Model OCR sao lưu dự phòng (Backup)
-│   └── yolo_plate_detector.pt      # Model YOLOv8 phát hiện biển số
-├── results/                    # Kết quả đánh giá và biểu đồ
-│   ├── evaluation_report.txt       # Báo cáo đánh giá chi tiết
-│   ├── char_error_distribution.png # Biểu đồ phân phối ký tự bị nhầm
-│   └── training_history.png        # Biểu đồ quá trình huấn luyện
-└── dataset/                    # Thư mục dữ liệu
-    ├── labels.csv                  # File nhãn (filename, plate_text)
-    └── plates/                     # Thư mục chứa ảnh biển số
-```
-
----
+├── app.py                       # Ứng dụng Web Dashboard hoàn chỉnh bằng Streamlit
+├── config.py                    # Cấu hình trung tâm (Hyperparameters, Alphabet, Paths)
+├── dataset.py                   # Pipeline nạp dữ liệu, chia 70/15/15, Augmentation, Oversample
+├── detector.py                  # Thuật toán phát hiện biển số (YOLOv8 & OpenCV)
+├── model.py                     # Kiến trúc CRNN PyTorch (CNN + BiLSTM + CTC Decode)
+├── train.py                     # Huấn luyện OCR, Early Stopping, Backup & So sánh Test Set
+├── train_yolo.py                # Kịch bản huấn luyện YOLOv8 phát hiện biển số
+├── evaluate.py                  # Đánh giá độc lập, vẽ biểu đồ lỗi, xuất báo cáo chi tiết
+├── iot_client.py                # Module giao tiếp IoT (HTTP → ESP-01 → UART → STM32)
+├── launcher.py                  # Entry point đóng gói PyInstaller → BienSoAI.exe
+├── BienSoAI.spec                # Cấu hình PyInstaller build (onedir mode)
+├── plate_history.json           # Lịch sử nhận dạng biển số (lưu tự động khi chạy)
+├── requirements.txt             # Danh sách thư viện phụ thuộc
+├── .gitignore                   # Loại trừ cache, build, dist, model backup
+├── README.md                    # Tài liệu dự án (file này)
+├── PROJECT_INFO_FOR_REPORT.txt  # Thông tin chi tiết dùng cho báo cáo
+├── saved_models/                # Thư mục lưu trữ trọng số mô hình
+│   ├── plate_recognizer.pth         # Model OCR CRNN chính thức (Production)
+│   ├── plate_recognizer_backup.pth  # Model OCR sao lưu dự phòng (Backup)
+│   └── yolo_plate_detector.pt       # Model YOLOv8 phát hiện biển số
+├── esp01_firmware/              # Firmware Arduino/ESP8266 cho module Wi-Fi ESP-01
+│   └── esp01_server/                # Sketch Arduino: HTTP server + UART bridge → STM32
+├── results/                     # Kết quả đánh giá và biểu đồ xuất ra
+│   ├── evaluation_report.txt        # Báo cáo đánh giá chi tiết
+│   ├── char_error_distribution.png  # Biểu đồ phân phối ký tự bị nhầm
+│   └── training_history.png         # Biểu đồ quá trình huấn luyện
+├── dataset/                     # Thư mục dữ liệu (không gồm yolo_data - ~961MB)
+│   ├── labels.csv                   # File nhãn (filename, plate_text)
+│   └── plates/                      # Thư mục chứa ảnh biển số (~6300+ ảnh)
+└── dist/                        # Thư mục đóng gói phân phối (tạo bởi PyInstaller)
+    └── BienSoAI/                    # Ứng dụng standalone đã đóng gói
+        ├── BienSoAI.exe                 # File thực thi chính (double-click để chạy)
+        └── _internal/                   # Thư mục tài nguyên & môi trường Python nhúng
+`
 
 ## ⚙️ 6. Hướng Dẫn Cài Đặt & Chạy Hệ Thống
 
