@@ -37,7 +37,7 @@ graph TD
     J -- "Khong" --> L["Hien thi thong tin xe binh thuong"]
     K --> M["iot_client.py: HTTP POST den ESP-01"]
     M --> N["ESP-01 Wi-Fi Bridge: UART den STM32"]
-    N --> O["STM32F407VET6: LED D2 nhap nhay x5 lan"]
+    N --> O["STM32F407VET6: LED D2 sang 10 giay"]
 ```
 
 ### 🔄 Luồng Tích Hợp IoT Đầy Đủ (End-to-End Flow)
