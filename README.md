@@ -1,4 +1,4 @@
-﻿# 🚗 Hệ Thống Nhận Diện Biển Số Xe Việt Nam (ALPR / ANPR)
+# 🚗 Hệ Thống Nhận Diện Biển Số Xe Việt Nam (ALPR / ANPR)
 
 > **Đồ án môn học:** Nghiên cứu & Xây dựng Hệ thống Tự Động Nhận Diện Biển Số Xe (Automatic License Plate Recognition)  
 > **Công nghệ lõi:** `YOLOv8` ⚡ `CRNN (CNN + BiLSTM)` ⚡ `CTC Loss` ⚡ `PyTorch` ⚡ `OpenCV` ⚡ `Streamlit`
@@ -18,34 +18,34 @@ Hệ thống được thiết kế theo kiến trúc **End-to-End** gồm 2 mô-
 
 ---
 
-## ðŸ—ï¸ 2. Kiáº¿n TrÃºc Há»‡ Thá»‘ng (System Architecture)
+## 🏗️ 2. Kiến Trúc Hệ Thống (System Architecture)
 
-### ðŸ¤– Pipeline AI Nháº­n Diá»‡n Biá»ƒn Sá»‘
+### 🤖 Pipeline AI Nhận Diện Biển Số
 
 ```mermaid
 graph TD
-    A[Äáº§u vÃ o: Upload / Camera / URL] --> B[MÃ´-Ä‘un 1: YOLOv8 Plate Detector]
-    B --> C[Cáº¯t vÃ¹ng biá»ƒn sá»‘ Crop]
-    C --> D[Tiá»n xá»­ lÃ½: Grayscale + CLAHE + Resize 192x64]
-    D --> E[MÃ´-Ä‘un 2: CRNN Feature Extractor CNN]
-    E --> F[Chuá»—i Ä‘áº·c trÆ°ng tuáº§n tá»±: BiLSTM]
-    F --> G[Giáº£i mÃ£ CTC Greedy Decoder]
-    G --> H[Kiá»ƒm tra tÃ­nh há»£p lá»‡ Format Biá»ƒn Sá»‘ VN]
-    H --> I[Giao diá»‡n Web Streamlit Dashboard]
-    I --> J{Khá»›p biá»ƒn sá»‘\nmá»¥c tiÃªu?}
-    J -- CÃ³ --> K[KÃ­ch hoáº¡t cáº£nh bÃ¡o IoT]
-    J -- KhÃ´ng --> L[Hiá»ƒn thá»‹ thÃ´ng tin xe bÃ¬nh thÆ°á»ng]
-    K --> M[iot_client.py: HTTP POST tá»›i ESP-01]
-    M --> N[ESP-01 Wi-Fi Bridge: UART tá»›i STM32]
-    N --> O[STM32F407VET6: Nháº¥p nhÃ¡y LED D2 / ChuÃ´ng cáº£nh bÃ¡o]
+    A["Dau vao: Upload / Camera / URL"] --> B["Mo-dun 1: YOLOv8 Plate Detector"]
+    B --> C["Cat vung bien so - Crop"]
+    C --> D["Tien xu ly: Grayscale + CLAHE + Resize 192x64"]
+    D --> E["Mo-dun 2: CRNN Feature Extractor CNN"]
+    E --> F["Chui dac trung tuan tu: BiLSTM"]
+    F --> G["Giai ma CTC Greedy Decoder"]
+    G --> H["Kiem tra hop le: Format Bien So VN"]
+    H --> I["Giao dien Web Streamlit Dashboard"]
+    I --> J{"Khop bien so muc tieu?"}
+    J -- "Co" --> K["Kich hoat canh bao IoT"]
+    J -- "Khong" --> L["Hien thi thong tin xe binh thuong"]
+    K --> M["iot_client.py: HTTP POST den ESP-01"]
+    M --> N["ESP-01 Wi-Fi Bridge: UART den STM32"]
+    N --> O["STM32F407VET6: LED D2 nhap nhay x5 lan"]
 ```
 
-### ðŸ“¶ Luá»“ng TÃ­ch Há»£p IoT Äáº§y Äá»§ (End-to-End)
+### 🔄 Luồng Tích Hợp IoT Đầy Đủ (End-to-End Flow)
 
 ```mermaid
 sequenceDiagram
     autonumber
-    actor User as PhÆ°Æ¡ng tiá»‡n vÃ o tráº¡m
+    actor User as Phuong tien vao tram
     participant Cam as Camera / Web UI
     participant AI as AI YOLOv8 + CRNN
     participant IoT as iot_client.py
@@ -53,35 +53,35 @@ sequenceDiagram
     participant STM as STM32F407VET6
     participant LED as LED D2 PA6
 
-    User->>Cam: PhÆ°Æ¡ng tiá»‡n di chuyá»ƒn vÃ o tráº¡m
-    Cam->>AI: Chá»¥p vÃ  truyá»n áº£nh vá» Web
-    AI->>AI: YOLOv8 phÃ¡t hiá»‡n + cáº¯t vÃ¹ng biá»ƒn sá»‘
-    AI->>AI: CRNN nháº­n dáº¡ng chuá»—i kÃ½ tá»±
-    AI->>AI: Äá»‘i chiáº¿u vá»›i danh sÃ¡ch biá»ƒn sá»‘ má»¥c tiÃªu
-    alt Khá»›p biá»ƒn sá»‘ má»¥c tiÃªu
-        AI->>IoT: Gá»i send_alert(plate_text)
-        IoT->>ESP: HTTP POST /alert vá»›i data plate=29AB-12345
+    User->>Cam: Phuong tien di chuyen vao tram
+    Cam->>AI: Chup va truyen anh ve Web
+    AI->>AI: YOLOv8 phat hien + cat vung bien so
+    AI->>AI: CRNN nhan dang chuoi ky tu
+    AI->>AI: Doi chieu voi danh sach bien so muc tieu
+    alt Khop bien so muc tieu
+        AI->>IoT: Goi send_alert(plate_text)
+        IoT->>ESP: HTTP POST /alert data plate=29AB-12345
         ESP->>ESP: Parse HTTP request
-        ESP->>STM: Gá»­i chuá»—i UART ALERT:29AB-12345 á»Ÿ 115200 bps
-        STM->>STM: Ngáº¯t USART2 báº¯t chuá»—i kÃ½ tá»±
-        STM->>LED: KÃ­ch hoáº¡t nháº¥p nhÃ¡y LED D2 PA6 x5 láº§n
-        STM-->>ESP: Pháº£n há»“i STM32_ACK:29AB-12345
+        ESP->>STM: Gui UART "ALERT:29AB-12345" 115200 bps
+        STM->>STM: Ngat USART2 bat chuoi ky tu
+        STM->>LED: Kich hoat nhap nhay LED D2 PA6 x5 lan
+        STM-->>ESP: Phan hoi "STM32_ACK:29AB-12345"
         ESP-->>IoT: HTTP 200 OK
-        IoT-->>AI: XÃ¡c nháº­n Ä‘Ã£ kÃ­ch hoáº¡t cáº£nh bÃ¡o
-        AI->>Cam: Hiá»ƒn thá»‹ cáº£nh bÃ¡o mÃ u Ä‘á» trÃªn Dashboard
-    else Biá»ƒn sá»‘ bÃ¬nh thÆ°á»ng
-        AI->>Cam: Hiá»ƒn thá»‹ thÃ´ng tin xe, khÃ´ng báº­t cáº£nh bÃ¡o
+        IoT-->>AI: Xac nhan da kich hoat canh bao
+        AI->>Cam: Hien thi canh bao mau do tren Dashboard
+    else Bien so binh thuong
+        AI->>Cam: Hien thi thong tin xe, khong bat canh bao
     end
 ```
 
-### ðŸ”§ Chi Tiáº¿t CÃ¡c Táº§ng Trong Máº¡ng CRNN
+### 🔧 Chi Tiết Các Tầng Trong Mạng CRNN
 
-| Táº§ng | ThÃ nh pháº§n | MÃ´ táº£ |
+| Tầng | Thành phần | Mô tả |
 | :--- | :--- | :--- |
-| **CNN** | 7 táº§ng Conv2D + BatchNorm + ReLU + MaxPool | TrÃ­ch xuáº¥t Ä‘áº·c trÆ°ng hÃ¬nh áº£nh biá»ƒn sá»‘ |
-| **Map-to-Seq** | Reshape feature maps thÃ nh chuá»—i vector | Chuyá»ƒn Ä‘á»•i sang dáº¡ng chuá»—i thá»i gian |
-| **BiLSTM** | 2 táº§ng Bidirectional LSTM hidden=256 | Há»c ngá»¯ cáº£nh 2 chiá»u trÃ¡i-pháº£i |
-| **CTC Decode** | Linear + CTC Greedy | Giáº£i mÃ£ kÃ½ tá»±, loáº¡i blank vÃ  kÃ½ tá»± trÃ¹ng |
+| **CNN** | 7 tầng Conv2D + BatchNorm + ReLU + MaxPool | Trích xuất đặc trưng hình ảnh biển số |
+| **Map-to-Seq** | Reshape feature maps thành chuỗi vector | Chuyển đổi sang dạng chuỗi thời gian |
+| **BiLSTM** | 2 tầng Bidirectional LSTM (hidden=256) | Học ngữ cảnh 2 chiều trái-phải |
+| **CTC Decode** | Linear + CTC Greedy Decode | Giải mã ký tự, loại blank `_` và ký tự trùng |
 
 ## 🌟 3. Các Điểm Nổi Bật & Cải Tiến Kỹ Thuật
 
