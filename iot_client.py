@@ -7,7 +7,7 @@ Nhiệm vụ:
   1. Giao tiếp qua giao thức HTTP (REST API) với vi điều khiển ESP-01 (ESP8266).
   2. Kiểm tra trạng thái kết nối mạng của module ESP-01.
   3. Gửi tín hiệu cảnh báo (HTTP POST /alert) kèm chuỗi biển số xe mục tiêu.
-  4. ESP-01 sẽ nhận bản tin và chuyển tiếp qua UART tới STM32F407VET6 để điều khiển LED/Còi.
+  4. ESP-01 sẽ nhận bản tin và chuyển tiếp qua UART tới STM32F407VET6 để điều khiển đèn LED D2 sáng 10s (không còi).
 
 Đặc tính an toàn:
   - Tất cả request đều có timeout ngắn (2.0s) để tránh treo giao diện Streamlit.

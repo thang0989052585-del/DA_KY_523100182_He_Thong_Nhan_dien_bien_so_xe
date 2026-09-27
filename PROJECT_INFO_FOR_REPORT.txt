@@ -18,7 +18,7 @@ Mục đích        : Cung cấp số liệu, kiến trúc, hiện trạng và p
 
 - Mục tiêu tổng quát:
   Nghiên cứu, thiết kế và hiện thực hóa một hệ thống hoàn chỉnh từ phần mềm Trí tuệ nhân tạo (AI) đến thiết bị phần cứng nhúng (IoT/Embedded):
-  Tự động phát hiện vị trí biển số trên phương tiện giao thông, đọc chính xác chuỗi ký tự (OCR) theo quy chuẩn biển số xe cơ giới Việt Nam, đối chiếu danh sách biển số mục tiêu (Blacklist/Whitelist) và phát tín hiệu cảnh báo không dây tới vi điều khiển để điều khiển cơ cấu chấp hành (đèn báo/còi).
+  Tự động phát hiện vị trí biển số trên phương tiện giao thông, đọc chính xác chuỗi ký tự (OCR) theo quy chuẩn biển số xe cơ giới Việt Nam, đối chiếu danh sách biển số mục tiêu (Blacklist/Whitelist) và phát tín hiệu cảnh báo không dây tới vi điều khiển để điều khiển cơ cấu chấp hành (đèn LED D2 sáng 10 giây).
 
 - Các mục tiêu cụ thể:
   1. Xây dựng mô-đun phát hiện vùng biển số (Plate Detection) ứng dụng mạng nơ-ron tích chập YOLOv8 (kèm thuật toán dự phòng OpenCV Canny Contour).
@@ -76,7 +76,7 @@ Bảng trạng thái kiểm thử và tính khả dụng của các chức năng
 | **Hiển thị độ tin cậy (Confidence %)** | Đã hoàn thành | ✅ Hiển thị chỉ số % độ tin cậy cho từng biển số. |
 | **Nhập biển số mục tiêu (Target Plate)** | Đã hoàn thành | ✅ Có ô nhập liệu trên Web UI. |
 | **Chuẩn hóa chuỗi so khớp mục tiêu** | Đã hoàn thành | ✅ Viết hoa, lược bỏ khoảng trắng, dấu '.', '-'. |
-| **Cảnh báo trực quan trên Web** | Đã hoàn thành | ✅ Bật khung viền đỏ, còi âm thanh Web, nhãn 🎯. |
+| **Cảnh báo trực quan trên Web** | Đã hoàn thành | ✅ Bật khung viền đỏ, âm thanh cảnh báo Web, nhãn 🎯. |
 | **Lưu trữ nhật ký nhận diện (History)** | Đã hoàn thành | ✅ Lưu persistent vào file JSON (hạn lưu 7 ngày). |
 | **Kết nối mạng Wi-Fi trên ESP-01** | Đã hoàn thành | ✅ ESP-01 đã nạp code, kết nối Mobile Hotspot laptop. |
 | **Gửi HTTP GET /status kiểm tra ESP** | Đã hoàn thành | ✅ Web phản hồi xanh: HTTP 200 OK (độ trễ ~250ms). |
@@ -434,7 +434,7 @@ Số liệu thực tế trích xuất trực tiếp từ file báo cáo thực n
   + Banner cảnh báo đỏ xuất hiện phía trên hiển thị rõ: "KHỚP X/Y XE TRONG ẢNH".
   + Lọc ra danh sách các biển số khớp (loại bỏ trùng lặp nếu 1 biển bị detect nhiều lần) và gửi lệnh HTTP cảnh báo tới ESP-01.
 - Thông báo khi không có biển số trùng:
-  Hiển thị biển số với viền xanh lá cây bình thường, không kích hoạt còi âm thanh Web và không gửi lệnh cảnh báo sang thiết bị nhúng.
+  Hiển thị biển số với viền xanh lá cây bình thường, không kích hoạt âm thanh cảnh báo Web và không gửi lệnh cảnh báo sang thiết bị nhúng.
 - Quản lý nhật ký và timestamp:
   Mỗi lượt nhận diện đều được ghi kèm timestamp định dạng `HH:MM:SS DD/MM/YYYY` và chuỗi ISO thời gian thực vào file `plate_history.json`.
 

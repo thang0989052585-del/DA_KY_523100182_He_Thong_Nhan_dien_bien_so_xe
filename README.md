@@ -182,6 +182,80 @@ streamlit run app.py
 ```
 Mở trình duyệt truy cập: **`http://localhost:8501`** (hoặc port được hiển thị trên Terminal).
 
+### Bước 5: 🔌 Cấu Hình, Nạp Code & Kết Nối Phần Cứng IoT (ESP-01 + STM32F407VET6)
+
+Hệ thống tích hợp đầy đủ phân hệ phần cứng cảnh báo nhận diện biển số xe mục tiêu. Dưới đây là hướng dẫn chi tiết từ nạp firmware, đấu nối chân đến vận hành:
+
+#### 5.1. Nạp Firmware Cho Module Wi-Fi ESP-01 (ESP8266)
+1. Khởi động phần mềm **Arduino IDE**, mở file mã nguồn [`esp01_firmware/esp01_firmware.ino`](esp01_firmware/esp01_firmware.ino).
+2. Vào **Tools -> Board -> Boards Manager**, tìm kiếm và cài đặt gói bo mạch `esp8266` (bởi *ESP8266 Community*).
+3. Thiết lập thông số Wi-Fi trong code khớp chính xác với mạng Wi-Fi hoặc Windows Mobile Hotspot máy tính:
+   ```cpp
+   const char* WIFI_SSID     = "DUAN_IOT";    // Tên trạm Wi-Fi / Hotspot phát ra
+   const char* WIFI_PASSWORD = "1234567890";   // Mật khẩu kết nối Wi-Fi
+   ```
+4. Cắm ESP-01 vào mạch nạp (USB to ESP-01 Programmer hoặc module USB-UART FTDI ở chế độ nạp Flash: chân GPIO0 nối GND).
+5. Chọn đúng cổng COM trong mục **Tools -> Port**, chọn Board **Generic ESP8266 Module** và nhấn **Upload**.
+6. Sau khi nạp hoàn tất, tháo chân GPIO0 khỏi GND, mở Serial Monitor (Baudrate `115200`) để quan sát địa chỉ IP được cấp phát (ví dụ: `192.168.137.61`).
+
+#### 5.2. Nạp Firmware Cho Vi Điều Khiển STM32F407VET6
+1. Khởi động phần mềm **STM32CubeIDE**, mở thư mục dự án [`stm32_firmware/`](stm32_firmware/).
+2. Các thông số phần cứng được cấu hình chuẩn xác trong [`canhbaonhandien.ioc`](stm32_firmware/canhbaonhandien.ioc):
+   - **Xung nhịp hệ thống (Clock):** 168 MHz (sử dụng thạch anh ngoài HSE 8MHz).
+   - **UART giao tiếp (USART2):** Chân `PA2` (TX), `PA3` (RX) tốc độ `115200 bps`, kích hoạt ngắt nhận `HAL_UART_Receive_IT`.
+   - **GPIO điều khiển LED D2:** Chân `PA6`, cấu hình Output Push-Pull, Active LOW (Mức 0V = Sáng, Mức 3.3V = Tắt).
+   - **Thời gian giữ sáng:** Được định nghĩa `#define LED_ON_DURATION 10000` (10 giây) trong [`main.c`](stm32_firmware/main.c).
+3. Kết nối mạch nạp **ST-Link v2** vào cổng SWD của bo STM32F407VET6 (4 dây: 3.3V, GND, SWDIO, SWCLK).
+4. Nhấn tổ hợp phím **Ctrl + F11** (hoặc chọn *Run -> Run*) để biên dịch và nạp firmware vào vi điều khiển.
+5. Khi nạp thành công, LED D2 sẽ nháy nhanh 3 lần xác nhận phần cứng sẵn sàng, sau đó tắt hẳn để chờ lệnh từ AI Web.
+
+#### 5.3. Sơ Đồ Đấu Nối Dây Phần Cứng (ESP-01 ➔ STM32F407VET6)
+Kết nối 5 đường tín hiệu chính giữa module ESP-01 và bo mạch STM32:
+
+| Chân ESP-01 (ESP8266) | Chân STM32F407VET6 | Chức Năng / Ghi Chú |
+| :--- | :--- | :--- |
+| **TXD** | **PA3 (USART2_RX)** | Truyền chuỗi lệnh `ALERT:<plate>\n` từ ESP-01 sang STM32 |
+| **RXD** | **PA2 (USART2_TX)** | Nhận chuỗi phản hồi `STM32_ACK:<plate>\n` từ STM32 |
+| **GND** | **GND** | Nối chung Mass (Bắt buộc để đồng pha tín hiệu logic UART) |
+| **3V3 (VCC)** | **3.3V (Nguồn)** | Cấp nguồn 3.3V ổn định (dòng tiêu thụ tối thiểu ≥ 300mA) |
+| **EN (CH_PD)** | **3.3V** | Kéo lên mức Cao 3.3V để kích hoạt vi điều khiển ESP8266 |
+
+```text
+ESP-01 (ESP8266)                  STM32F407VET6
+┌────────────────┐                 ┌────────────────┐
+│ TXD            ├─────────────────► PA3 (USART2_RX)│
+│ RXD            ◄─────────────────┤ PA2 (USART2_TX)│
+│ GND            ├─────────────────┤ GND            │
+│ 3V3 (VCC)      ├─────────────────┤ 3.3V           │
+│ EN (CH_PD)     ├─────────────────┤ 3.3V           │
+└────────────────┘                 └────────────────┘
+                                          │
+                                    ┌─────▼──────────┐
+                                    │ LED D2 (PA6)   │
+                                    │ Sáng đúng 10s  │
+                                    │ (Không còi)    │
+                                    └────────────────┘
+```
+> ⚠️ **Lưu ý an toàn:** Tuyệt đối không cắm ESP-01 vào chân nguồn 5V vì sẽ gây hỏng chip Wi-Fi. Quy tắc truyền thông nối tiếp: **TX của mạch này luôn đấu vào RX của mạch kia**.
+
+#### 5.4. Kịch Bản Thử Nghiệm Trực Tiếp Bằng Cáp USB-UART (Khi Chưa Có ESP-01)
+Nếu đang trong giai đoạn kiểm thử phần cứng chưa gắn ESP-01, cắm trực tiếp module USB-UART (hoặc ST-Link VCP) từ cổng USB máy tính vào STM32:
+* Chân **TX (Cáp USB)** ➔ Chân **PA3 (USART2_RX)** trên STM32.
+* Chân **RX (Cáp USB)** ➔ Chân **PA2 (USART2_TX)** trên STM32.
+* Chân **GND (Cáp USB)** ➔ Chân **GND** trên STM32.
+
+#### 5.5. Thao Tác Kết Nối & Kiểm Thử Cảnh Báo Trên Giao Diện Web
+1. Khởi động ứng dụng Web: `streamlit run app.py` (truy cập `http://localhost:8501`).
+2. Quan sát mục **"Cổng Giao Tiếp IoT"** tại thanh bên trái (Sidebar):
+   - Chọn phương thức kết nối: **Wi-Fi (ESP-01 / ESP8266)** hoặc **Serial (Cổng COM)** nếu cắm dây trực tiếp.
+   - Điền địa chỉ IP của ESP-01 (VD: `192.168.137.61`) và Port `80`.
+   - Nhấn nút **Kiểm tra kết nối**: Khi hiện thông báo màu xanh lá `✅ ESP-01 đã kết nối thành công (HTTP 200, ...ms)`, luồng mạng đã thông suốt.
+3. Thiết lập danh sách biển số xe cần theo dõi (VD: `30A-123.45`, `29A-888.88`).
+4. Tải lên hình ảnh hoặc mở camera chứa biển số trong danh sách:
+   - Mô hình YOLOv8 + CRNN phát hiện và đọc chuỗi ký tự biển số.
+   - Nhận diện khớp mục tiêu: Web hiển thị banner đỏ và tự động phát tín hiệu HTTP POST `/alert` tới ESP-01 ➔ ESP-01 đẩy lệnh UART sang STM32.
+   - **Đèn LED D2 (PA6) trên bo STM32 lập tức bật sáng liên tục trong 10 giây (10s, không báo còi)** rồi tự tắt hoàn toàn!
+
 ---
 
 ## 🖥️ 7. Tính Năng Giao Diện Web App
@@ -218,7 +292,7 @@ flowchart LR
 
     subgraph Hardware["🎛️ Phần Cứng STM32"]
         Serial -->|Dây TX -> PA3| STM[STM32F407VET6<br/>Ngắt USART2 RX]
-        STM -->|Kích hoạt GPIO| LED[🚨 LED D2 - PA6<br/>Sáng liên tục 10s / Còi Buzzer]
+        STM -->|Kích hoạt GPIO| LED[🚨 LED D2 - PA6<br/>Sáng liên tục 10s]
         STM -.->|Gửi phản hồi ACK: PA2 -> RX| Serial
     end
 ```
@@ -232,7 +306,7 @@ sequenceDiagram
     participant AI as 🧠 AI (YOLOv8 + CRNN)
     participant ESP as 📶 ESP-01 (Wi-Fi Bridge)
     participant STM as ⚡ STM32F407VET6
-    participant Actuator as 🚨 LED D2 / Còi Báo Động
+    participant Actuator as 🚨 LED D2 (PA6)
 
     User->>Cam: Phương tiện di chuyển vào trạm
     Cam->>AI: Chụp và truyền ảnh về Web
@@ -243,7 +317,7 @@ sequenceDiagram
         ESP->>ESP: Parse dữ liệu HTTP
         ESP->>STM: Gửi chuỗi UART: "ALERT:30A12345\n" (115200 bps)
         STM->>STM: Ngắt USART2 bắt chuỗi ký tự
-        STM->>Actuator: Kích hoạt bật sáng LED D2 (PA6) trong 10 giây (10s) / Bật còi
+        STM->>Actuator: Kích hoạt bật sáng LED D2 (PA6) trong 10 giây (10s)
         STM-->>ESP: Gửi phản hồi "STM32_ACK:30A12345\n"
         ESP-->>AI: Phản hồi HTTP 200 OK (Đã kích hoạt cảnh báo)
         AI->>Cam: Hiển thị cảnh báo đỏ trên Dashboard
@@ -296,7 +370,7 @@ ESP-01 (ESP8266)                  STM32F407VET6
 | Lệnh gửi (Từ PC/ESP-01 sang STM32) | Phản hồi từ STM32 | Hành động phần cứng |
 | :--- | :--- | :--- |
 | `ALERT:TEST\r\n` | `STM32_ACK:TEST\r\n` | LED D2 (PA6) sáng liên tục 10 giây (10s) |
-| `ALERT:30A12345\r\n` | `STM32_ACK:30A12345\r\n` | LED D2 (PA6) sáng liên tục 10 giây (10s), báo còi |
+| `ALERT:30A12345\r\n` | `STM32_ACK:30A12345\r\n` | LED D2 (PA6) sáng liên tục 10 giây (10s) |
 | Khởi động nguồn STM32 | `STM32_READY\r\n` | Báo hiệu vi điều khiển đã sẵn sàng nhận lệnh |
 
 ---

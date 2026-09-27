@@ -16,6 +16,8 @@ Thư mục này chứa mã nguồn firmware nạp cho bo mạch vi điều khi�
 
 ---
 
+
+> 💡 **Lưu ý phần cứng:** Hệ thống sử dụng duy nhất đèn LED D2 (PA6) làm cơ cấu chỉ thị cảnh báo trực quan sáng 10 giây (không kết nối còi Buzzer).
 ## 🎯 Cơ Chế Hoạt Động (LED Sáng 10 Giây)
 
 1. **Khởi động nguồn:**
