@@ -66,7 +66,7 @@ graph TD
 
 ## 📁 5. Cấu Trúc Thư Mục Dự Án (Project Structure)
 
-`	ext
+```text
 DOAN/
 ├── app.py                       # Ứng dụng Web Dashboard hoàn chỉnh bằng Streamlit
 ├── config.py                    # Cấu hình trung tâm (Hyperparameters, Alphabet, Paths)
@@ -101,7 +101,7 @@ DOAN/
     └── BienSoAI/                    # Ứng dụng standalone đã đóng gói
         ├── BienSoAI.exe                 # File thực thi chính (double-click để chạy)
         └── _internal/                   # Thư mục tài nguyên & môi trường Python nhúng
-`
+```
 
 ## ⚙️ 6. Hướng Dẫn Cài Đặt & Chạy Hệ Thống
 
